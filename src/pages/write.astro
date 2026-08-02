@@ -1,0 +1,341 @@
+---
+import MainGridLayout from "@/layouts/MainGridLayout.astro";
+import I18nKey from "@/i18n/i18nKey";
+import { i18n } from "@/i18n/translation";
+
+const today = new Date().toISOString().slice(0, 10);
+---
+
+<MainGridLayout title="写文章" description="在浏览器中撰写并发布新文章">
+  <div class="flex w-full rounded-(--radius-large) overflow-hidden relative min-h-32">
+    <div class="card-base z-10 px-6 py-6 relative w-full">
+      <h1 class="text-2xl font-bold mb-1">✍️ 写文章</h1>
+      <p class="text-sm opacity-60 mb-4">
+        填写信息、左侧写正文、右侧实时预览。点「发布」即提交到 GitHub 仓库并触发 Cloudflare 重新部署。
+      </p>
+
+      <!-- GitHub Token 栏 -->
+      <details class="mb-4 rounded-lg border border-black/10 dark:border-white/10 bg-white/40 dark:bg-white/5">
+        <summary class="cursor-pointer px-3 py-2 text-sm font-medium select-none">
+          ⚙️ GitHub 发布设置（首次需填写 Token）
+        </summary>
+        <div class="px-3 pb-3 pt-1 text-sm space-y-2">
+          <label class="block">
+            <span class="opacity-70">Personal Access Token（仅需一次，保存在浏览器本地）</span>
+            <input
+              id="gh-token"
+              type="password"
+              placeholder="ghp_xxx 或 github_pat_xxx"
+              class="mt-1 w-full rounded-lg border border-black/10 dark:border-white/10 bg-white/70 dark:bg-black/20 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-black/10 dark:focus:ring-white/10"
+            />
+          </label>
+          <p class="text-xs opacity-60 leading-relaxed">
+            生成一个有 <code>repo</code> 权限的 classic token：
+            <a class="underline" href="https://github.com/settings/tokens" target="_blank" rel="noreferrer">github.com/settings/tokens</a>。
+            不设 Token 也能用：发布时会打开 GitHub 预填好的新建文件页面，你点 Commit 即可。
+          </p>
+          <button
+            id="save-token"
+            type="button"
+            class="rounded-lg bg-[hsl(var(--hue)_70%_50%)] px-3 py-1.5 text-sm font-medium text-white hover:opacity-90"
+          >
+            保存 Token 到本地
+          </button>
+          <span id="token-saved" class="text-xs text-[hsl(var(--hue)_70%_50%)] ml-2"></span>
+        </div>
+      </details>
+
+      <!-- 元信息表单 -->
+      <div class="grid gap-3 sm:grid-cols-2 mb-3">
+        <label class="block">
+          <span class="text-sm opacity-70">标题 *</span>
+          <input id="f-title" type="text" placeholder="我的第一篇文章"
+            class="mt-1 w-full rounded-lg border border-black/10 dark:border-white/10 bg-white/70 dark:bg-black/20 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-black/10 dark:focus:ring-white/10" />
+        </label>
+        <label class="block">
+          <span class="text-sm opacity-70">文件名（英文 slug，自动加 .md）</span>
+          <input id="f-filename" type="text" placeholder="my-first-post"
+            class="mt-1 w-full rounded-lg border border-black/10 dark:border-white/10 bg-white/70 dark:bg-black/20 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-black/10 dark:focus:ring-white/10" />
+        </label>
+        <label class="block">
+          <span class="text-sm opacity-70">标签（逗号分隔）</span>
+          <input id="f-tags" type="text" placeholder="随笔, 生活"
+            class="mt-1 w-full rounded-lg border border-black/10 dark:border-white/10 bg-white/70 dark:bg-black/20 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-black/10 dark:focus:ring-white/10" />
+        </label>
+        <label class="block">
+          <span class="text-sm opacity-70">分类</span>
+          <input id="f-category" type="text" placeholder="生活"
+            class="mt-1 w-full rounded-lg border border-black/10 dark:border-white/10 bg-white/70 dark:bg-black/20 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-black/10 dark:focus:ring-white/10" />
+        </label>
+        <label class="block">
+          <span class="text-sm opacity-70">发布日期</span>
+          <input id="f-date" type="date" value={today}
+            class="mt-1 w-full rounded-lg border border-black/10 dark:border-white/10 bg-white/70 dark:bg-black/20 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-black/10 dark:focus:ring-white/10" />
+        </label>
+        <label class="block">
+          <span class="text-sm opacity-70">封面图（路径或填 api 用随机图）</span>
+          <input id="f-cover" type="text" placeholder="./cover.jpg 或 api"
+            class="mt-1 w-full rounded-lg border border-black/10 dark:border-white/10 bg-white/70 dark:bg-black/20 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-black/10 dark:focus:ring-white/10" />
+        </label>
+        <label class="flex items-end gap-2 pb-2">
+          <input id="f-draft" type="checkbox" class="w-4 h-4" />
+          <span class="text-sm opacity-70">存为草稿（不公开）</span>
+        </label>
+        <label class="flex items-end gap-2 pb-2">
+          <input id="f-pinned" type="checkbox" class="w-4 h-4" />
+          <span class="text-sm opacity-70">置顶文章</span>
+        </label>
+      </div>
+
+      <!-- 编辑 + 预览 -->
+      <div class="grid gap-4 lg:grid-cols-2">
+        <div class="flex flex-col">
+          <span class="text-sm opacity-70 mb-1">正文（Markdown）</span>
+          <textarea
+            id="f-body"
+            spellcheck="false"
+            placeholder={"# 小标题\n\n在这里写正文，支持 **Markdown**。"}
+            class="h-[60vh] w-full resize-y rounded-lg border border-black/10 dark:border-white/10 bg-white/70 dark:bg-black/20 px-3 py-2 font-mono text-sm leading-relaxed outline-none focus:ring-2 focus:ring-black/10 dark:focus:ring-white/10"
+          ></textarea>
+        </div>
+        <div class="flex flex-col">
+          <span class="text-sm opacity-70 mb-1">实时预览</span>
+          <div
+            id="preview"
+            class="h-[60vh] overflow-auto rounded-lg border border-black/10 dark:border-white/10 bg-white/40 dark:bg-white/5 px-4 py-3 prose dark:prose-invert prose-base max-w-none! custom-md"
+          ></div>
+        </div>
+      </div>
+
+      <!-- 操作按钮 -->
+      <div class="flex flex-wrap items-center gap-3 mt-4">
+        <button
+          id="btn-publish"
+          type="button"
+          class="rounded-lg bg-[hsl(var(--hue)_70%_50%)] px-5 py-2 text-sm font-semibold text-white hover:opacity-90 disabled:opacity-50"
+        >
+          发布文章
+        </button>
+        <button
+          id="btn-copy"
+          type="button"
+          class="rounded-lg border border-black/15 dark:border-white/15 px-4 py-2 text-sm font-medium hover:bg-black/5 dark:hover:bg-white/10"
+        >
+          复制 Markdown
+        </button>
+        <button
+          id="btn-download"
+          type="button"
+          class="rounded-lg border border-black/15 dark:border-white/15 px-4 py-2 text-sm font-medium hover:bg-black/5 dark:hover:bg-white/10"
+        >
+          下载 .md 文件
+        </button>
+        <span id="status" class="text-sm"></span>
+      </div>
+    </div>
+  </div>
+</MainGridLayout>
+
+<script>
+  import { marked } from "marked";
+
+  function $<T extends HTMLElement = HTMLElement>(id: string): T | null {
+    return document.getElementById(id) as T | null;
+  }
+
+  const titleEl = $<HTMLInputElement>("f-title");
+  const filenameEl = $<HTMLInputElement>("f-filename");
+  const tagsEl = $<HTMLInputElement>("f-tags");
+  const categoryEl = $<HTMLInputElement>("f-category");
+  const dateEl = $<HTMLInputElement>("f-date");
+  const coverEl = $<HTMLInputElement>("f-cover");
+  const draftEl = $<HTMLInputElement>("f-draft");
+  const pinnedEl = $<HTMLInputElement>("f-pinned");
+  const bodyEl = $<HTMLTextAreaElement>("f-body");
+  const previewEl = $<HTMLDivElement>("preview");
+  const statusEl = $<HTMLSpanElement>("status");
+  const tokenInput = $<HTMLInputElement>("gh-token");
+
+  const REPO = "boyazsy/Firefly";
+  const BRANCH = "master";
+  const POST_DIR = "src/content/posts";
+
+  marked.setOptions({ breaks: false, gfm: true });
+
+  // ---- Token 本地存储 ----
+  const TOKEN_KEY = "firefly_gh_token";
+  if (tokenInput) {
+    tokenInput.value = localStorage.getItem(TOKEN_KEY) || "";
+  }
+  const saveTokenBtn = $<HTMLButtonElement>("save-token");
+  const tokenSaved = $<HTMLSpanElement>("token-saved");
+  saveTokenBtn?.addEventListener("click", () => {
+    if (!tokenInput) return;
+    const v = tokenInput.value.trim();
+    if (v) {
+      localStorage.setItem(TOKEN_KEY, v);
+      if (tokenSaved) tokenSaved.textContent = "已保存 ✓";
+      setTimeout(() => (tokenSaved && (tokenSaved.textContent = "")), 2000);
+    } else {
+      localStorage.removeItem(TOKEN_KEY);
+      if (tokenSaved) tokenSaved.textContent = "已清除";
+    }
+  });
+
+  // ---- 标题 → 文件名自动填充 ----
+  titleEl?.addEventListener("input", () => {
+    if (!filenameEl || filenameEl.dataset.touched === "1") return;
+    const slug = (titleEl.value || "")
+      .toLowerCase()
+      .trim()
+      .replace(/[^\w\u4e00-\u9fa5]+/g, "-")
+      .replace(/^-+|-+$/g, "")
+      .slice(0, 60);
+    filenameEl.value = slug || "";
+  });
+  filenameEl?.addEventListener("input", () => {
+    if (filenameEl) filenameEl.dataset.touched = "1";
+  });
+
+  // ---- 实时预览 ----
+  let previewTimer: number | undefined;
+  function renderPreview() {
+    if (!bodyEl || !previewEl) return;
+    previewEl.innerHTML = marked.parse(bodyEl.value || "") as string;
+  }
+  bodyEl?.addEventListener("input", () => {
+    window.clearTimeout(previewTimer);
+    previewTimer = window.setTimeout(renderPreview, 200);
+  });
+  renderPreview();
+
+  // ---- 组装文件内容 ----
+  function buildContent(): string {
+    const title = (titleEl?.value || "未命名文章").trim();
+    const tags = (tagsEl?.value || "")
+      .split(/[,，]/)
+      .map((t) => t.trim())
+      .filter(Boolean);
+    const category = (categoryEl?.value || "").trim();
+    const date = (dateEl?.value || new Date().toISOString().slice(0, 10)).trim();
+    const cover = (coverEl?.value || "").trim();
+    const draft = draftEl instanceof HTMLInputElement ? draftEl.checked : false;
+    const pinned = pinnedEl instanceof HTMLInputElement ? pinnedEl.checked : false;
+    const body = (bodyEl?.value || "").trim();
+
+    const fm: string[] = ["---"];
+    fm.push(`title: ${JSON.stringify(title)}`);
+    fm.push(`published: ${date}`);
+    fm.push(`description: ${JSON.stringify((body.slice(0, 60) || title))}`);
+    if (cover) fm.push(`image: ${JSON.stringify(cover)}`);
+    if (tags.length) fm.push(`tags: [${tags.map((t) => JSON.stringify(t)).join(", ")}]`);
+    if (category) fm.push(`category: ${JSON.stringify(category)}`);
+    fm.push(`draft: ${draft ? "true" : "false"}`);
+    fm.push(`pinned: ${pinned ? "true" : "false"}`);
+    fm.push(`comment: true`);
+    fm.push("---");
+    fm.push("");
+    fm.push(body);
+    return fm.join("\n");
+  }
+
+  function getFilename(): string {
+    let name = (filenameEl?.value || titleEl?.value || "untitled")
+      .trim()
+      .replace(/[^\w\u4e00-\u9fa5-]+/g, "-")
+      .replace(/^-+|-+$/g, "");
+    if (!name) name = "untitled";
+    return name + ".md";
+  }
+
+  function utf8ToBase64(str: string): string {
+    return btoa(unescape(encodeURIComponent(str)));
+  }
+
+  function setStatus(msg: string, ok = true) {
+    if (!statusEl) return;
+    statusEl.textContent = msg;
+    statusEl.className = `text-sm ${ok ? "text-[hsl(var(--hue)_70%_50%)]" : "text-red-500"}`;
+  }
+
+  // ---- 发布 ----
+  const publishBtn = $<HTMLButtonElement>("btn-publish");
+  publishBtn?.addEventListener("click", async () => {
+    if (!titleEl?.value.trim()) {
+      setStatus("请先填写标题", false);
+      return;
+    }
+    const content = buildContent();
+    const filename = getFilename();
+    const token = localStorage.getItem(TOKEN_KEY) || (tokenInput?.value.trim() ?? "");
+    const path = `${POST_DIR}/${encodeURIComponent(filename)}`;
+
+    if (!token) {
+      // 无 Token：打开 GitHub 预填新建文件页
+      const url =
+        `https://github.com/${REPO}/new/${BRANCH}/` +
+        `?filename=${encodeURIComponent(`${POST_DIR}/${filename}`)}` +
+        `&value=${encodeURIComponent(content)}` +
+        `&message=${encodeURIComponent(`Add post: ${titleEl.value.trim()}`)}`;
+      window.open(url, "_blank");
+      setStatus("已打开 GitHub 新建文件页，点 Commit changes 即可发布");
+      return;
+    }
+
+    publishBtn.setAttribute("disabled", "true");
+    setStatus("正在发布到 GitHub…");
+    try {
+      const res = await fetch(
+        `https://api.github.com/repos/${REPO}/contents/${path}`,
+        {
+          method: "PUT",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+            "X-GitHub-Api-Version": "2022-11-28",
+          },
+          body: JSON.stringify({
+            message: `Add post: ${titleEl.value.trim()}`,
+            content: utf8ToBase64(content),
+            branch: BRANCH,
+          }),
+        }
+      );
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data?.message || `HTTP ${res.status}`);
+      }
+      setStatus("发布成功 ✓ 部署将在 1-2 分钟后生效");
+      if (data?.commit?.html_url) {
+        window.open(data.commit.html_url, "_blank");
+      }
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : String(e);
+      setStatus(`发布失败：${msg}`, false);
+    } finally {
+      publishBtn.removeAttribute("disabled");
+    }
+  });
+
+  // ---- 复制 / 下载 ----
+  const copyBtn = $<HTMLButtonElement>("btn-copy");
+  copyBtn?.addEventListener("click", async () => {
+    const content = buildContent();
+    try {
+      await navigator.clipboard.writeText(content);
+      setStatus("已复制 Markdown 到剪贴板");
+    } catch {
+      setStatus("复制失败，请手动选择文本", false);
+    }
+  });
+
+  const dlBtn = $<HTMLButtonElement>("btn-download");
+  dlBtn?.addEventListener("click", () => {
+    const blob = new Blob([buildContent()], { type: "text/markdown;charset=utf-8" });
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = getFilename();
+    a.click();
+    URL.revokeObjectURL(a.href);
+  });
+</script>
