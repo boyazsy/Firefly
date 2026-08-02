@@ -7,7 +7,34 @@ const today = new Date().toISOString().slice(0, 10);
 ---
 
 <MainGridLayout title="写文章" description="在浏览器中撰写并发布新文章">
-  <div class="flex w-full rounded-(--radius-large) overflow-hidden relative min-h-32">
+  <!-- 访问密码门（轻量前端校验，防君子不防小人） -->
+  <div
+    id="gate"
+    class="fixed inset-0 z-[100] flex items-center justify-center bg-white dark:bg-neutral-900"
+  >
+    <div class="card-base w-80 max-w-[90vw] p-6 text-center">
+      <div class="text-3xl mb-2">🔐</div>
+      <h2 class="text-lg font-bold mb-1">写作页已加密</h2>
+      <p class="text-sm opacity-60 mb-4">请输入访问密码后进入</p>
+      <input
+        id="gate-pass"
+        type="password"
+        autocomplete="current-password"
+        placeholder="访问密码"
+        class="w-full rounded-lg border border-black/10 dark:border-white/10 bg-white/70 dark:bg-black/20 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-black/10 dark:focus:ring-white/10"
+      />
+      <button
+        id="gate-btn"
+        type="button"
+        class="mt-3 w-full rounded-lg bg-[hsl(var(--hue)_70%_50%)] px-4 py-2 text-sm font-semibold text-white hover:opacity-90"
+      >
+        进入
+      </button>
+      <p id="gate-err" class="mt-2 text-xs text-red-500" style="display:none">密码错误，请重试</p>
+    </div>
+  </div>
+
+  <div id="editor-wrap" class="flex w-full rounded-(--radius-large) overflow-hidden relative min-h-32" style="display:none">
     <div class="card-base z-10 px-6 py-6 relative w-full">
       <h1 class="text-2xl font-bold mb-1">✍️ 写文章</h1>
       <p class="text-sm opacity-60 mb-4">
@@ -138,6 +165,47 @@ const today = new Date().toISOString().slice(0, 10);
 
 <script>
   import { marked } from "marked";
+
+  // ---- 访问密码门（轻量前端校验，防君子不防小人）----
+  // 默认密码 "qingyou"。改密码：在终端执行 printf '%s' '你的密码' | base64，把结果填到 GATE_PASS_B64。
+  const GATE_PASS_B64 = "cWluZ3lvdQ==";
+  (function setupGate() {
+    const gate = document.getElementById("gate");
+    const gateInput = document.getElementById("gate-pass") as HTMLInputElement | null;
+    const gateBtn = document.getElementById("gate-btn") as HTMLButtonElement | null;
+    const gateErr = document.getElementById("gate-err") as HTMLElement | null;
+    const editorWrap = document.getElementById("editor-wrap");
+    function unlock() {
+      if (!gateInput || !gate || !editorWrap) return;
+      if (!gateInput.value) {
+        if (gateErr) gateErr.style.display = "";
+        return;
+      }
+      try {
+        if (btoa(unescape(encodeURIComponent(gateInput.value))) === GATE_PASS_B64) {
+          gate.style.display = "none";
+          editorWrap.style.display = "flex";
+          try { sessionStorage.setItem("firefly_gate_ok", "1"); } catch {}
+        } else {
+          if (gateErr) gateErr.style.display = "";
+          gateInput.value = "";
+        }
+      } catch {
+        if (gateErr) gateErr.style.display = "";
+      }
+    }
+    gateBtn?.addEventListener("click", unlock);
+    gateInput?.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") unlock();
+    });
+    // 本次会话已解锁则直接放行
+    try {
+      if (sessionStorage.getItem("firefly_gate_ok") === "1" && gate && editorWrap) {
+        gate.style.display = "none";
+        editorWrap.style.display = "flex";
+      }
+    } catch {}
+  })();
 
   function $<T extends HTMLElement = HTMLElement>(id: string): T | null {
     return document.getElementById(id) as T | null;
