@@ -61,12 +61,33 @@
         return p.then(function (data) {
           if (!r.ok) {
             var msg = (data && (data.message || data.error)) || ("HTTP " + r.status);
+            if (r.status === 401) msg = "Token 无效或已过期（401）：请到「用户与权限」重新填写";
+            else if (r.status === 403 && /rate limit/i.test(msg)) msg = "GitHub API 速率超限（403）：未填 Token 时每小时仅 60 次，请填入 Token";
+            else if (r.status === 403) msg = "无权限（403）：Token 缺少 repo 写权限，或不是该仓库的协作者";
+            else if (r.status === 404) msg = "未找到（404）：请检查「仓库」填写是否为 owner/repo、分支是否正确（Firefly 默认为 master）";
+            else if (r.status === 409) msg = "冲突（409）：文件已被改动，请刷新后重试";
+            else if (r.status === 422) msg = "参数不合法（422）：" + msg;
             var err = new Error(msg);
             err.status = r.status;
             throw err;
           }
           return data;
         });
+      })
+      .catch(function (e) {
+        // fetch 本身失败（网络层），浏览器统一抛 TypeError: Failed to fetch，信息量为零，这里翻译成可行动的诊断
+        if (e && e.status === undefined && (e instanceof TypeError || /failed to fetch|networkerror|load failed|network request failed/i.test(e.message || ""))) {
+          var hint;
+          if (location.protocol === "file:") {
+            hint = "当前是用 file:// 直接打开的本地文件，浏览器禁止此类页面发起跨域请求。请改用 http:// 访问（线上 /admin/，或本地起一个 HTTP 服务器）。";
+          } else {
+            hint = "连不上 api.github.com。可能原因：网络/代理不通、浏览器扩展（广告拦截、隐私插件）拦截了请求、或公司网络限制。可先在浏览器直接打开 https://api.github.com/rate_limit 测试连通性。";
+          }
+          var ne = new Error("网络请求失败 — " + hint);
+          ne.network = true;
+          throw ne;
+        }
+        throw e;
       });
   }
   function getFile(path) {
@@ -180,7 +201,22 @@
   function renderBool(b) { return b ? "true" : "false"; }
 
   // ---------- 密码门 ----------
+  // file:// 打开时浏览器禁止跨域请求，任何 API 调用都会失败，提前醒目提示
+  function warnIfFileProtocol() {
+    if (location.protocol !== "file:") return false;
+    var bar = document.createElement("div");
+    bar.style.cssText = "position:fixed;top:0;left:0;right:0;z-index:9999;background:#B54708;color:#fff;" +
+      "padding:12px 16px;font-size:14px;line-height:1.6;text-align:center;font-family:inherit;";
+    bar.innerHTML = "⚠️ 你正在用 <b>file://</b> 直接打开本页，浏览器会禁止所有跨域请求，" +
+      "读取仓库必定失败（Failed to fetch）。<br>请改用 <b>http://</b> 访问：线上 <b>/admin/</b>，" +
+      "或本地起服务器后打开 <b>http://127.0.0.1:8767/admin/</b>";
+    document.body.appendChild(bar);
+    document.body.style.paddingTop = "72px";
+    return true;
+  }
+
   function initGate() {
+    warnIfFileProtocol();
     // 尝试读取仓库中的 auth.json（若存在则覆盖默认密码）
     gh("/repos/" + state.repo + "/contents/.firefly-admin/auth.json?ref=" + state.branch)
       .then(function (d) { state.adminPassB64 = d.content ? b64u(ub64(d.content)) : state.adminPassB64; })
