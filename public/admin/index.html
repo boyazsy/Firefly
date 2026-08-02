@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>青柚 · Firefly 后台</title>
+<link rel="stylesheet" href="./admin.css" />
+</head>
+<body>
+
+<!-- 密码门 -->
+<div id="gate">
+  <div class="gate-card">
+    <div class="gate-logo">🍊</div>
+    <h1>青柚后台</h1>
+    <p class="gate-sub">Firefly 博客管理控制台</p>
+    <input id="gate-input" type="password" placeholder="输入管理密码" autocomplete="off" />
+    <button id="gate-btn">进入</button>
+    <p id="gate-error" class="gate-error"></p>
+    <p class="gate-hint">默认密码 qingyouadmin · 可在「用户与权限」中修改</p>
+  </div>
+</div>
+
+<!-- 主应用 -->
+<div id="app" hidden>
+  <header class="topbar">
+    <div class="brand">🍊 <span>青柚 · Firefly 后台</span></div>
+    <div class="topbar-right">
+      <span id="repo-label" class="repo-label">—</span>
+      <span id="token-status" class="pill pill-warn">未配置 Token</span>
+      <button id="btn-logout" class="btn-ghost">退出</button>
+    </div>
+  </header>
+
+  <nav class="tabs">
+    <button class="tab active" data-tab="dashboard">概览</button>
+    <button class="tab" data-tab="posts">内容管理</button>
+    <button class="tab" data-tab="config">站点配置</button>
+    <button class="tab" data-tab="users">用户与权限</button>
+    <button class="tab" data-tab="stats">数据与互动</button>
+  </nav>
+
+  <main class="container">
+
+    <!-- 概览 -->
+    <section id="view-dashboard" class="view">
+      <div id="dash-cards" class="bento-grid"></div>
+      <div class="card">
+        <h3>仓库信息</h3>
+        <div id="dash-repo" class="kv"></div>
+      </div>
+      <div class="card">
+        <h3>快捷操作</h3>
+        <div class="quick-row">
+          <button class="btn" data-go="posts">✍️ 写新文章</button>
+          <button class="btn" data-go="config">⚙️ 改站点配置</button>
+          <button class="btn" data-go="stats">📊 看数据</button>
+          <button class="btn" data-go="users">🔐 权限设置</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- 内容管理 -->
+    <section id="view-posts" class="view" hidden>
+      <div class="toolbar">
+        <input id="posts-search" class="input" placeholder="搜索标题 / 标签 / 分类…" />
+        <button id="btn-refresh-posts" class="btn-ghost">刷新</button>
+        <button id="btn-new-post" class="btn">＋ 新建文章</button>
+      </div>
+      <p id="posts-status" class="muted"></p>
+      <div id="posts-list" class="post-list"></div>
+    </section>
+
+    <!-- 站点配置 -->
+    <section id="view-config" class="view" hidden>
+      <div class="toolbar">
+        <button id="cfg-reload" class="btn-ghost">重新读取</button>
+        <span class="muted">编辑 src/config/siteConfig.ts</span>
+      </div>
+      <div class="card">
+        <h3>常用字段（结构化）</h3>
+        <div class="form-grid">
+          <label>站点标题<input id="cfg-title" class="input" /></label>
+          <label>副标题<input id="cfg-subtitle" class="input" /></label>
+          <label>语言
+            <select id="cfg-lang" class="input">
+              <option value="zh_CN">简体中文</option>
+              <option value="zh_TW">繁体中文</option>
+              <option value="en">English</option>
+              <option value="ja">日本語</option>
+              <option value="ru">Русский</option>
+            </select>
+          </label>
+          <label>主题色相 (0-360)<input id="cfg-hue" class="input" type="number" min="0" max="360" /></label>
+          <label>默认主题
+            <select id="cfg-mode" class="input">
+              <option value="system">跟随系统</option>
+              <option value="light">亮色</option>
+              <option value="dark">暗色</option>
+            </select>
+          </label>
+          <label>页面宽度 (rem)<input id="cfg-pagewidth" class="input" type="number" /></label>
+          <label>导航栏标题<input id="cfg-navtitle" class="input" /></label>
+          <label>导航菜单对齐
+            <select id="cfg-navalign" class="input">
+              <option value="center">居中</option>
+              <option value="left">靠左</option>
+            </select>
+          </label>
+          <label class="check"><input id="cfg-cardborder" type="checkbox" /> 卡片边框</label>
+          <label class="check"><input id="cfg-cardfollow" type="checkbox" /> 卡片跟随主题色</label>
+          <label class="check"><input id="cfg-navsticky" type="checkbox" /> 导航栏吸顶</label>
+          <label class="full">站点描述<textarea id="cfg-description" class="input" rows="2"></textarea></label>
+          <label class="full">关键词（逗号分隔）<input id="cfg-keywords" class="input" /></label>
+        </div>
+        <button id="cfg-save" class="btn">保存结构化字段</button>
+      </div>
+      <div class="card">
+        <h3>原始编辑（高级 / 兜底）</h3>
+        <textarea id="cfg-raw" class="input code" rows="14"></textarea>
+        <button id="cfg-raw-save" class="btn">保存原始内容</button>
+      </div>
+      <p id="cfg-status" class="muted"></p>
+    </section>
+
+    <!-- 用户与权限 -->
+    <section id="view-users" class="view" hidden>
+      <div class="card">
+        <h3>GitHub Token（用于发布/编辑）</h3>
+        <p class="muted">存储在浏览器 localStorage，不会上传到仓库。需要 repo 写权限（classic token 勾 repo，或 fine-grained 选本仓库 Contents: Read and write）。</p>
+        <input id="usr-token" class="input" type="password" placeholder="ghp_xxx 或 github_pat_xxx" />
+        <button id="usr-token-save" class="btn">保存 Token</button>
+        <button id="usr-token-clear" class="btn-ghost">清除</button>
+        <p id="usr-token-status" class="muted"></p>
+      </div>
+      <div class="card">
+        <h3>仓库与分支</h3>
+        <label class="full">仓库（owner/repo）<input id="usr-repo" class="input" /></label>
+        <label>分支<input id="usr-branch" class="input" /></label>
+        <button id="usr-save-repo" class="btn">保存</button>
+      </div>
+      <div class="card">
+        <h3>管理员密码</h3>
+        <p class="muted">修改后写入仓库 .firefly-admin/auth.json。注意：纯前端校验，公开仓库下可被读源码绕过，仅作基础门禁。</p>
+        <input id="usr-pass-new" class="input" type="password" placeholder="新密码" />
+        <button id="usr-pass-set" class="btn">修改密码</button>
+        <p id="usr-pass-status" class="muted"></p>
+      </div>
+      <div class="card">
+        <h3>操作员名单（客户端校验）</h3>
+        <p class="muted">列出允许进入后台的 GitHub 用户名。仅客户端隐藏界面，非真正 RBAC，公开部署请勿依赖。</p>
+        <div id="usr-operators" class="op-list"></div>
+        <div class="inline">
+          <input id="usr-op-input" class="input" placeholder="github 用户名" />
+          <button id="usr-op-add" class="btn">添加</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- 数据与互动 -->
+    <section id="view-stats" class="view" hidden>
+      <div id="stats-cards" class="bento-grid"></div>
+      <div class="card">
+        <h3>标签分布</h3>
+        <div id="stats-tags" class="chips"></div>
+      </div>
+      <div class="card">
+        <h3>分类分布</h3>
+        <div id="stats-cats" class="chips"></div>
+      </div>
+      <div class="card">
+        <h3>Umami 实时数据（可选）</h3>
+        <p class="muted">填写后从 Umami 自建/云端 API 拉取。留空则不拉取。</p>
+        <label class="full">API 地址<input id="umami-host" class="input" placeholder="https://cloud.umami.is" /></label>
+        <label>Website ID<input id="umami-id" class="input" placeholder="网站 ID" /></label>
+        <label>API Key<input id="umami-key" class="input" type="password" placeholder="Umami API Key" /></label>
+        <button id="umami-load" class="btn">拉取数据</button>
+        <pre id="umami-result" class="code muted"></pre>
+      </div>
+      <div class="card">
+        <h3>评论系统</h3>
+        <div id="comment-status" class="kv"></div>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<!-- 文章编辑弹窗 -->
+<div id="post-modal" class="modal" hidden>
+  <div class="modal-box">
+    <div class="modal-head">
+      <h3 id="pm-title2">新建文章</h3>
+      <button id="pm-cancel" class="btn-ghost">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-grid">
+        <label class="full">标题<input id="pm-title" class="input" /></label>
+        <label class="full">文件名（不含扩展名）<input id="pm-slug" class="input" placeholder="my-first-post" /></label>
+        <label>标签（逗号分隔）<input id="pm-tags" class="input" placeholder="随笔, 生活" /></label>
+        <label>分类<input id="pm-category" class="input" placeholder="生活" /></label>
+        <label>日期<input id="pm-date" class="input" type="date" /></label>
+        <label>封面图 URL<input id="pm-cover" class="input" placeholder="./cover.jpg 或 https://…" /></label>
+        <label class="check"><input id="pm-draft" type="checkbox" /> 草稿</label>
+      </div>
+      <div class="editor-split">
+        <div>
+          <div class="sub">正文（Markdown）</div>
+          <textarea id="pm-body" class="input code" rows="16" placeholder="# 标题&#10;正文…"></textarea>
+        </div>
+        <div>
+          <div class="sub">预览</div>
+          <div id="pm-preview" class="preview"></div>
+        </div>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <span id="pm-status" class="muted"></span>
+      <div class="grow"></div>
+      <button id="pm-delete" class="btn-danger">删除</button>
+      <button id="pm-save" class="btn">保存并发布</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast" class="toast" hidden></div>
+
+<script src="./marked.min.js"></script>
+<script src="./admin.js"></script>
+</body>
+</html>
