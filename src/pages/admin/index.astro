@@ -1,0 +1,33 @@
+---
+import AdminPanel from "@/components/admin/AdminPanel.svelte";
+import { adminConfig, siteConfig } from "@/config";
+import I18nKey from "@/i18n/i18nKey";
+import { i18n } from "@/i18n/translation";
+import MainGridLayout from "@/layouts/MainGridLayout.astro";
+import { url } from "@/utils/url-utils";
+
+import "@/styles/admin.css";
+
+// 页面开关：关闭时直接跳转 404
+if (!siteConfig.pages.admin || !adminConfig.enable) {
+	return Astro.redirect("/404/");
+}
+
+const title = i18n(I18nKey.admin);
+---
+
+<MainGridLayout title={title} description="站点后台管理" hideSidebars>
+    <meta slot="head" name="robots" content="noindex, nofollow" />
+
+    <div class="mx-auto w-full max-w-[92rem] px-1 py-2 md:px-0" data-pagefind-ignore>
+        <AdminPanel
+            client:load
+            postsUrl={url("/api/admin-posts.json")}
+            settingsUrl={url("/api/admin-settings.json")}
+            editorUrl={url("/admin/editor/")}
+            defaults={adminConfig.defaults}
+            githubDefault={adminConfig.github}
+            maxLocalDrafts={adminConfig.maxLocalDrafts}
+        />
+    </div>
+</MainGridLayout>

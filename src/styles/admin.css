@@ -1,0 +1,853 @@
+/* ==========================================================================
+   后台管理样式 - 沿用 Firefly 主题变量，保证与前台视觉一致
+   这里全部使用原生 CSS，避免依赖 Tailwind 的 @apply 编译顺序
+   ========================================================================== */
+
+.admin-shell {
+	color: var(--deep-text, oklch(0.25 0.02 var(--hue)));
+}
+
+/* ---------- 卡片 ---------- */
+.admin-card {
+	background: var(--card-bg);
+	border-radius: var(--radius-large);
+	transition:
+		background-color 0.15s ease,
+		border-color 0.15s ease;
+}
+.admin-card--bordered {
+	border: 1px solid var(--line-divider);
+	box-shadow: 0 1px 2px rgb(0 0 0 / 0.04);
+}
+
+/* ---------- 按钮 ---------- */
+.admin-btn {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	gap: 0.375rem;
+	border-radius: 0.75rem;
+	padding: 0.5rem 1rem;
+	font-size: 0.875rem;
+	font-weight: 500;
+	line-height: 1.25rem;
+	transition: all 0.15s ease;
+	cursor: pointer;
+	border: 1px solid transparent;
+	white-space: nowrap;
+}
+.admin-btn:disabled {
+	opacity: 0.5;
+	cursor: not-allowed;
+}
+.admin-btn svg {
+	width: 1.05rem;
+	height: 1.05rem;
+	flex: none;
+}
+.admin-btn--primary {
+	background: var(--primary);
+	color: #fff;
+}
+.admin-btn--primary:hover:not(:disabled) {
+	filter: brightness(1.06);
+	transform: translateY(-1px);
+}
+.admin-btn--regular {
+	background: var(--btn-regular-bg);
+	color: var(--btn-content);
+}
+.admin-btn--regular:hover:not(:disabled) {
+	background: var(--btn-regular-bg-hover);
+}
+.admin-btn--ghost {
+	background: transparent;
+	color: var(--btn-content);
+	border-color: var(--line-divider);
+}
+.admin-btn--ghost:hover:not(:disabled) {
+	background: var(--btn-plain-bg-hover);
+}
+.admin-btn--danger {
+	background: transparent;
+	color: oklch(0.62 0.2 25);
+	border-color: oklch(0.62 0.2 25 / 0.35);
+}
+.admin-btn--danger:hover:not(:disabled) {
+	background: oklch(0.62 0.2 25 / 0.1);
+}
+.admin-btn--sm {
+	padding: 0.25rem 0.625rem;
+	font-size: 0.75rem;
+	border-radius: 0.5rem;
+}
+.admin-btn--block {
+	width: 100%;
+}
+
+/* ---------- 表单 ---------- */
+.admin-label {
+	display: block;
+	font-size: 0.75rem;
+	font-weight: 600;
+	letter-spacing: 0.02em;
+	margin-bottom: 0.375rem;
+	color: var(--btn-content);
+}
+.admin-input,
+.admin-select,
+.admin-textarea {
+	width: 100%;
+	background: var(--btn-plain-bg-hover, var(--btn-regular-bg));
+	border: 1px solid var(--line-divider);
+	border-radius: 0.625rem;
+	padding: 0.5rem 0.75rem;
+	font-size: 0.875rem;
+	color: inherit;
+	transition:
+		border-color 0.15s ease,
+		background-color 0.15s ease;
+	outline: none;
+}
+.admin-input::placeholder,
+.admin-textarea::placeholder {
+	color: var(--content-meta, rgb(0 0 0 / 0.35));
+	opacity: 0.7;
+}
+.admin-input:focus,
+.admin-select:focus,
+.admin-textarea:focus {
+	border-color: var(--primary);
+	background: var(--card-bg);
+	box-shadow: 0 0 0 3px oklch(from var(--primary) l c h / 0.15);
+}
+.admin-select {
+	appearance: none;
+	background-image: linear-gradient(45deg, transparent 50%, currentColor 50%),
+		linear-gradient(135deg, currentColor 50%, transparent 50%);
+	background-position:
+		calc(100% - 18px) calc(50% + 2px),
+		calc(100% - 13px) calc(50% + 2px);
+	background-size:
+		5px 5px,
+		5px 5px;
+	background-repeat: no-repeat;
+	padding-right: 2rem;
+	color: var(--btn-content);
+}
+.admin-textarea {
+	resize: vertical;
+	line-height: 1.7;
+}
+
+/* 开关 */
+.admin-switch {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.5rem;
+	cursor: pointer;
+	user-select: none;
+}
+.admin-switch input {
+	position: absolute;
+	opacity: 0;
+	pointer-events: none;
+}
+.admin-switch-track {
+	position: relative;
+	width: 2.5rem;
+	height: 1.375rem;
+	border-radius: 999px;
+	background: var(--btn-regular-bg);
+	transition: background-color 0.2s ease;
+	flex: none;
+}
+.admin-switch-track::after {
+	content: "";
+	position: absolute;
+	top: 0.1875rem;
+	left: 0.1875rem;
+	width: 1rem;
+	height: 1rem;
+	border-radius: 999px;
+	background: #fff;
+	box-shadow: 0 1px 3px rgb(0 0 0 / 0.25);
+	transition: transform 0.2s ease;
+}
+.admin-switch input:checked + .admin-switch-track {
+	background: var(--primary);
+}
+.admin-switch input:checked + .admin-switch-track::after {
+	transform: translateX(1.125rem);
+}
+
+/* 标签输入 */
+.admin-chip {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.25rem;
+	border-radius: 999px;
+	background: var(--btn-regular-bg);
+	color: var(--btn-content);
+	padding: 0.125rem 0.5rem 0.125rem 0.625rem;
+	font-size: 0.75rem;
+	line-height: 1.4;
+}
+.admin-chip button {
+	display: inline-flex;
+	align-items: center;
+	opacity: 0.6;
+	transition: opacity 0.15s ease;
+}
+.admin-chip button:hover {
+	opacity: 1;
+}
+
+/* 徽标 */
+.admin-badge {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.25rem;
+	border-radius: 999px;
+	padding: 0.0625rem 0.5rem;
+	font-size: 0.6875rem;
+	line-height: 1.25rem;
+	font-weight: 500;
+}
+.admin-badge--draft {
+	background: oklch(0.7 0.14 60 / 0.18);
+	color: oklch(0.55 0.15 60);
+}
+.admin-badge--pinned {
+	background: oklch(from var(--primary) l c h / 0.16);
+	color: var(--primary);
+}
+.admin-badge--locked {
+	background: oklch(0.7 0.14 250 / 0.18);
+	color: oklch(0.55 0.15 250);
+}
+.admin-badge--neutral {
+	background: var(--btn-regular-bg);
+	color: var(--btn-content);
+}
+
+/* 提示条 */
+.admin-alert {
+	display: flex;
+	align-items: flex-start;
+	gap: 0.5rem;
+	border-radius: 0.75rem;
+	padding: 0.625rem 0.875rem;
+	font-size: 0.8125rem;
+	line-height: 1.5;
+	border: 1px solid transparent;
+}
+.admin-alert--info {
+	background: oklch(from var(--primary) l c h / 0.1);
+	border-color: oklch(from var(--primary) l c h / 0.25);
+	color: var(--btn-content);
+}
+.admin-alert--error {
+	background: oklch(0.62 0.2 25 / 0.1);
+	border-color: oklch(0.62 0.2 25 / 0.3);
+	color: oklch(0.55 0.18 25);
+}
+.admin-alert--success {
+	background: oklch(0.7 0.14 150 / 0.12);
+	border-color: oklch(0.7 0.14 150 / 0.3);
+	color: oklch(0.55 0.15 150);
+}
+.admin-alert--warn {
+	background: oklch(0.7 0.14 60 / 0.12);
+	border-color: oklch(0.7 0.14 60 / 0.3);
+	color: oklch(0.55 0.15 60);
+}
+
+/* 登录框抖动动画 */
+@keyframes admin-shake {
+	0%,
+	100% {
+		transform: translateX(0);
+	}
+	20% {
+		transform: translateX(-6px);
+	}
+	40% {
+		transform: translateX(6px);
+	}
+	60% {
+		transform: translateX(-4px);
+	}
+	80% {
+		transform: translateX(4px);
+	}
+}
+.admin-shake {
+	animation: admin-shake 0.4s ease;
+}
+
+/* 编辑器 */
+.admin-editor-textarea {
+	width: 100%;
+	min-height: 60vh;
+	font-family: var(--font-code, ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace);
+	font-size: 0.875rem;
+	line-height: 1.75;
+	tab-size: 2;
+	border: 1px solid var(--line-divider);
+	border-radius: 0.75rem;
+	padding: 1rem;
+	background: var(--btn-plain-bg-hover, var(--btn-regular-bg));
+	color: inherit;
+	outline: none;
+	resize: vertical;
+}
+.admin-editor-textarea:focus {
+	border-color: var(--primary);
+	box-shadow: 0 0 0 3px oklch(from var(--primary) l c h / 0.12);
+}
+
+/* 预览区 */
+.admin-preview {
+	min-height: 60vh;
+	max-height: 70vh;
+	overflow-y: auto;
+	padding: 1.25rem;
+	border: 1px solid var(--line-divider);
+	border-radius: 0.75rem;
+	background: var(--card-bg);
+	font-size: 0.9375rem;
+	line-height: 1.8;
+	word-break: break-word;
+}
+.admin-preview h1 {
+	font-size: 1.6rem;
+	font-weight: 700;
+	margin: 1.2rem 0 0.75rem;
+	line-height: 1.35;
+}
+.admin-preview h2 {
+	font-size: 1.35rem;
+	font-weight: 700;
+	margin: 1.2rem 0 0.6rem;
+	padding-bottom: 0.25rem;
+	border-bottom: 1px solid var(--line-divider);
+}
+.admin-preview h3 {
+	font-size: 1.1rem;
+	font-weight: 600;
+	margin: 1rem 0 0.5rem;
+}
+.admin-preview p {
+	margin: 0.75rem 0;
+}
+.admin-preview ul,
+.admin-preview ol {
+	margin: 0.75rem 0;
+	padding-left: 1.5rem;
+}
+.admin-preview ul {
+	list-style: disc;
+}
+.admin-preview ol {
+	list-style: decimal;
+}
+.admin-preview li {
+	margin: 0.25rem 0;
+}
+.admin-preview blockquote {
+	margin: 0.75rem 0;
+	padding: 0.5rem 1rem;
+	border-left: 3px solid var(--primary);
+	background: var(--btn-regular-bg);
+	border-radius: 0 0.5rem 0.5rem 0;
+}
+.admin-preview code {
+	font-family: var(--font-code, ui-monospace, monospace);
+	font-size: 0.85em;
+	background: var(--inline-code-bg, var(--btn-regular-bg));
+	color: var(--inline-code-color, var(--btn-content));
+	padding: 0.1rem 0.35rem;
+	border-radius: 0.35rem;
+}
+.admin-preview pre {
+	background: var(--codeblock-bg);
+	color: #e6e6e6;
+	padding: 0.875rem 1rem;
+	border-radius: 0.75rem;
+	overflow-x: auto;
+	margin: 0.875rem 0;
+	font-size: 0.8rem;
+	line-height: 1.6;
+}
+.admin-preview pre code {
+	background: transparent;
+	color: inherit;
+	padding: 0;
+}
+.admin-preview img {
+	max-width: 100%;
+	border-radius: 0.75rem;
+	margin: 0.5rem 0;
+}
+.admin-preview a {
+	color: var(--primary);
+	text-decoration: underline;
+	text-underline-offset: 2px;
+}
+.admin-preview hr {
+	margin: 1.25rem 0;
+	border-color: var(--line-divider);
+}
+.admin-preview table {
+	width: 100%;
+	border-collapse: collapse;
+	margin: 0.875rem 0;
+	font-size: 0.875rem;
+}
+.admin-preview th,
+.admin-preview td {
+	border: 1px solid var(--line-divider);
+	padding: 0.4rem 0.6rem;
+}
+.admin-preview th {
+	background: var(--btn-regular-bg);
+	font-weight: 600;
+}
+
+/* 骨架屏 */
+.admin-skeleton {
+	background: linear-gradient(
+		90deg,
+		var(--btn-regular-bg) 25%,
+		var(--btn-regular-bg-hover) 37%,
+		var(--btn-regular-bg) 63%
+	);
+	background-size: 400% 100%;
+	animation: admin-skeleton 1.4s ease infinite;
+	border-radius: 0.5rem;
+}
+@keyframes admin-skeleton {
+	0% {
+		background-position: 100% 50%;
+	}
+	100% {
+		background-position: 0 50%;
+	}
+}
+
+/* 后台内部滚动条 */
+.admin-scroll {
+	scrollbar-width: thin;
+	scrollbar-color: var(--scrollbar-bg) transparent;
+}
+.admin-scroll::-webkit-scrollbar {
+	width: 6px;
+	height: 6px;
+}
+.admin-scroll::-webkit-scrollbar-thumb {
+	background: var(--scrollbar-bg);
+	border-radius: 999px;
+}
+.admin-scroll::-webkit-scrollbar-thumb:hover {
+	background: var(--scrollbar-bg-hover);
+}
+.admin-scroll::-webkit-scrollbar-track {
+	background: transparent;
+}
+
+/* ==========================================================================
+   设置面板（AdminSettingsHub / 各类 Settings* 编辑器）
+   ========================================================================== */
+
+/* 开关：button + role="switch" 结构（与旧的 input 版本并存） */
+button.admin-switch {
+	border: none;
+	background: transparent;
+	padding: 0;
+	margin: 0;
+}
+.admin-switch-track.is-on {
+	background: var(--primary);
+}
+.admin-switch-track.is-on::after {
+	transform: translateX(1.125rem);
+}
+
+/* 布局 */
+.admin-stack {
+	display: flex;
+	flex-direction: column;
+	gap: 0.75rem;
+}
+.admin-grid-2 {
+	display: grid;
+	grid-template-columns: repeat(2, minmax(0, 1fr));
+	gap: 0.75rem;
+}
+.admin-grid-3 {
+	display: grid;
+	grid-template-columns: repeat(3, minmax(0, 1fr));
+	gap: 0.75rem;
+}
+@media (max-width: 768px) {
+	.admin-grid-2,
+	.admin-grid-3 {
+		grid-template-columns: minmax(0, 1fr);
+	}
+}
+
+.admin-section__title {
+	display: flex;
+	align-items: center;
+	gap: 0.5rem;
+	font-size: 0.875rem;
+	font-weight: 700;
+	margin-bottom: 0.75rem;
+}
+.admin-section__title:not(:first-child) {
+	margin-top: 0.5rem;
+}
+
+/* 字段 */
+.admin-form {
+	display: flex;
+	flex-direction: column;
+	gap: 0.875rem;
+}
+.admin-form--nested {
+	gap: 0.625rem;
+}
+.admin-field__inline {
+	display: flex;
+	align-items: center;
+	gap: 0.75rem;
+	min-height: 2rem;
+	flex-wrap: wrap;
+}
+.admin-field__inline .admin-field__label {
+	margin-right: auto;
+}
+.admin-field__stack {
+	display: flex;
+	flex-direction: column;
+	gap: 0.25rem;
+}
+.admin-field__stack--grow {
+	flex: 1 1 12rem;
+}
+.admin-field__label {
+	font-size: 0.8125rem;
+	font-weight: 600;
+	color: var(--btn-content);
+}
+.admin-field__hint {
+	font-size: 0.75rem;
+	line-height: 1.5;
+	opacity: 0.65;
+	color: var(--btn-content);
+}
+.admin-field__error {
+	font-size: 0.75rem;
+	color: var(--btn-danger-bg, #dc2626);
+}
+.admin-field__count {
+	font-size: 0.75rem;
+	opacity: 0.55;
+}
+.admin-field__row {
+	display: flex;
+	align-items: center;
+	gap: 0.5rem;
+}
+.admin-field__row--wrap {
+	flex-wrap: wrap;
+	gap: 0.75rem;
+}
+.admin-field__row .admin-input {
+	flex: 1 1 auto;
+}
+.admin-field__group {
+	display: flex;
+	flex-direction: column;
+	gap: 0.5rem;
+	padding-top: 0.5rem;
+	border-top: 1px solid var(--line-divider);
+}
+.admin-field__toggle {
+	display: flex;
+	align-items: center;
+	gap: 0.5rem;
+	font-size: 0.8125rem;
+	font-weight: 600;
+	color: var(--btn-content);
+	background: transparent;
+	border: none;
+	padding: 0.25rem 0;
+	cursor: pointer;
+}
+.admin-field__nested {
+	margin-top: 0.25rem;
+	padding-left: 0.75rem;
+	border-left: 2px solid var(--line-divider);
+}
+.admin-field__preview {
+	font-size: 0.75rem;
+	opacity: 0.7;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	flex: 1 1 auto;
+}
+
+/* 列表编辑器 */
+.admin-list {
+	display: flex;
+	flex-direction: column;
+	gap: 0.625rem;
+}
+.admin-list--sub {
+	margin-top: 0.5rem;
+	padding-left: 0.75rem;
+	border-left: 2px solid var(--line-divider);
+}
+.admin-list__item {
+	display: flex;
+	flex-direction: column;
+	gap: 0.5rem;
+	padding: 0.75rem;
+}
+.admin-list__bar {
+	display: flex;
+	align-items: center;
+	gap: 0.5rem;
+}
+.admin-list__index {
+	font-size: 0.75rem;
+	font-weight: 700;
+	opacity: 0.55;
+}
+.admin-list__name {
+	font-size: 0.8125rem;
+	font-weight: 600;
+	margin-right: auto;
+}
+.admin-list__actions {
+	display: flex;
+	align-items: center;
+	gap: 0.25rem;
+	margin-left: auto;
+}
+
+/* 标签 chips */
+.admin-chips {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.375rem;
+}
+.admin-chip__remove {
+	display: inline-flex;
+	align-items: center;
+	opacity: 0.6;
+}
+.admin-chip__remove:hover {
+	opacity: 1;
+}
+button.admin-chip {
+	border: 1px solid var(--line-divider);
+	background: transparent;
+	cursor: pointer;
+	padding: 0.25rem 0.625rem;
+}
+button.admin-chip.is-active {
+	background: var(--primary);
+	color: #fff;
+	border-color: transparent;
+}
+
+/* 模式选择卡片 */
+.admin-mode-grid {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr));
+	gap: 0.625rem;
+	margin: 0.5rem 0;
+}
+.admin-mode-card {
+	display: flex;
+	flex-direction: column;
+	align-items: flex-start;
+	gap: 0.25rem;
+	padding: 0.75rem;
+	border-radius: 0.75rem;
+	border: 1px solid var(--line-divider);
+	background: var(--card-bg);
+	cursor: pointer;
+	transition:
+		border-color 0.18s ease,
+		background-color 0.18s ease;
+}
+.admin-mode-card:hover {
+	border-color: var(--primary);
+}
+.admin-mode-card.is-active {
+	border-color: var(--primary);
+	background: var(--btn-plain-bg-hover);
+}
+.admin-mode-card__label {
+	font-size: 0.8125rem;
+	font-weight: 700;
+}
+.admin-mode-card__desc {
+	font-size: 0.6875rem;
+	opacity: 0.6;
+	line-height: 1.4;
+}
+
+/* 开关网格 */
+.admin-toggle-grid {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr));
+	gap: 0.25rem 1rem;
+}
+
+/* 滑杆与色板 */
+.admin-range {
+	width: 100%;
+	accent-color: var(--primary);
+}
+.admin-hue-swatch {
+	width: 1.75rem;
+	height: 1.75rem;
+	border-radius: 999px;
+	border: 2px solid var(--card-bg);
+	box-shadow: 0 0 0 1px var(--line-divider);
+	flex: none;
+}
+.admin-avatar-preview {
+	width: 2.5rem;
+	height: 2.5rem;
+	border-radius: 999px;
+	object-fit: cover;
+	flex: none;
+	border: 1px solid var(--line-divider);
+}
+.admin-input--search {
+	max-width: 14rem;
+}
+
+/* 设置中心布局 */
+.admin-settings__body {
+	display: grid;
+	grid-template-columns: 13rem minmax(0, 1fr);
+	gap: 0.75rem;
+	align-items: start;
+}
+@media (max-width: 900px) {
+	.admin-settings__body {
+		grid-template-columns: minmax(0, 1fr);
+	}
+}
+.admin-settings__nav {
+	padding: 0.5rem;
+	max-height: calc(100vh - 16rem);
+	overflow-y: auto;
+}
+.admin-settings__group {
+	margin-bottom: 0.5rem;
+}
+.admin-settings__group-title {
+	font-size: 0.6875rem;
+	font-weight: 700;
+	opacity: 0.5;
+	padding: 0.375rem 0.5rem;
+	text-transform: uppercase;
+	letter-spacing: 0.04em;
+}
+.admin-settings__link {
+	display: flex;
+	align-items: center;
+	gap: 0.5rem;
+	width: 100%;
+	padding: 0.4375rem 0.5rem;
+	border: none;
+	background: transparent;
+	border-radius: 0.5rem;
+	font-size: 0.8125rem;
+	color: var(--btn-content);
+	cursor: pointer;
+	text-align: left;
+	transition: background-color 0.15s ease;
+}
+.admin-settings__link:hover {
+	background: var(--btn-plain-bg-hover);
+}
+.admin-settings__link.is-active {
+	background: var(--primary);
+	color: #fff;
+}
+.admin-settings__dot {
+	width: 0.375rem;
+	height: 0.375rem;
+	border-radius: 999px;
+	background: var(--primary);
+	flex: none;
+	margin-left: auto;
+}
+.admin-settings__link.is-active .admin-settings__dot {
+	background: #fff;
+}
+
+/* 导出抽屉 */
+.admin-drawer__mask {
+	position: fixed;
+	inset: 0;
+	z-index: 60;
+	background: rgb(0 0 0 / 0.4);
+}
+.admin-drawer {
+	position: fixed;
+	top: 0;
+	right: 0;
+	bottom: 0;
+	z-index: 61;
+	width: min(38rem, 100vw);
+	display: flex;
+	flex-direction: column;
+	background: var(--page-bg, var(--card-bg));
+	border-left: 1px solid var(--line-divider);
+	box-shadow: -8px 0 24px rgb(0 0 0 / 0.12);
+}
+.admin-drawer__head {
+	display: flex;
+	align-items: flex-start;
+	justify-content: space-between;
+	gap: 1rem;
+	padding: 0.875rem 1rem;
+	border-bottom: 1px solid var(--line-divider);
+}
+.admin-drawer__body {
+	flex: 1;
+	overflow-y: auto;
+	padding: 1rem;
+	display: flex;
+	flex-direction: column;
+	gap: 0.75rem;
+}
+.admin-drawer__foot {
+	padding: 0.875rem 1rem;
+	border-top: 1px solid var(--line-divider);
+	display: flex;
+	flex-direction: column;
+	gap: 0.5rem;
+}
+.admin-code {
+	margin: 0;
+	padding: 0.75rem;
+	border-radius: 0.625rem;
+	background: var(--btn-regular-bg);
+	font-size: 0.75rem;
+	line-height: 1.6;
+	overflow: auto;
+	max-height: 50vh;
+	white-space: pre;
+}

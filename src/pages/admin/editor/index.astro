@@ -1,0 +1,40 @@
+---
+import PostEditor from "@/components/admin/PostEditor.svelte";
+import { adminConfig, siteConfig } from "@/config";
+import I18nKey from "@/i18n/i18nKey";
+import { i18n } from "@/i18n/translation";
+import MainGridLayout from "@/layouts/MainGridLayout.astro";
+import { url } from "@/utils/url-utils";
+
+import "@/styles/admin.css";
+
+// 页面开关：关闭时直接跳转 404
+if (!siteConfig.pages.admin || !adminConfig.enable) {
+	return Astro.redirect("/404/");
+}
+
+const title = i18n(I18nKey.adminEditor);
+---
+
+<MainGridLayout title={title} description="撰写与编辑文章" hideSidebars>
+    <meta slot="head" name="robots" content="noindex, nofollow" />
+    <script
+        is:inline
+        slot="head"
+        src={url("/assets/js/marked.min.js")}
+        defer
+    ></script>
+
+    <div class="mx-auto w-full max-w-[92rem] px-1 py-2 md:px-0" data-pagefind-ignore>
+        <PostEditor
+            client:load
+            postsUrl={url("/api/admin-posts.json")}
+            postContentUrl={url("/api/admin-post/")}
+            adminUrl={url("/admin/")}
+            defaults={adminConfig.defaults}
+            githubDefault={adminConfig.github}
+            maxLocalDrafts={adminConfig.maxLocalDrafts}
+            markedUrl={url("/assets/js/marked.min.js")}
+        />
+    </div>
+</MainGridLayout>
