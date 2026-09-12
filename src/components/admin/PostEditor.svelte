@@ -21,15 +21,8 @@ import {
 	fetchRepoFile,
 	isGitHubReady,
 } from "@/utils/admin-github";
-import {
-	copyText,
-	countWords,
-	downloadTextFile,
-	formatDate,
-	parsePostMarkdown,
-	serializePost,
-	slugify,
-} from "@/utils/admin-markdown";
+import { copyText, countWords, downloadTextFile, formatDate, parsePostMarkdown, serializePost, slugify } from "@/utils/admin-markdown";
+import { renderMarkdownPreview } from "@/utils/admin-markdown-preview";
 import AdminIcon from "./AdminIcon.svelte";
 
 interface Props {
@@ -40,7 +33,6 @@ interface Props {
 	defaults: AdminDefaultsConfig;
 	githubDefault: AdminGitHubConfig;
 	maxLocalDrafts: number;
-	markedUrl: string;
 }
 
 const {
@@ -50,7 +42,6 @@ const {
 	defaults,
 	githubDefault,
 	maxLocalDrafts,
-	markedUrl,
 }: Props = $props();
 
 type ViewMode = "edit" | "split" | "preview";
@@ -100,6 +91,7 @@ let dirty = $state(false);
 let draftId = $state("");
 let editingId = $state("");
 let textarea: HTMLTextAreaElement | null = $state(null);
+let previewEl: HTMLDivElement | null = $state(null);
 let previewHtml = $state("");
 
 const githubReady = $derived(
@@ -149,63 +141,327 @@ function notify(message: string, type: "success" | "error" = "success") {
 }
 
 // ---------- 预览 ----------
-function ensureMarked(): Promise<void> {
-	if (typeof window === "undefined") return Promise.resolve();
-	if ((window as unknown as { marked?: { parse: (s: string) => string } }).marked) {
-		return Promise.resolve();
-	}
-	return new Promise((resolve) => {
-		const script = document.createElement("script");
-		script.src = markedUrl;
-		script.onload = () => resolve();
-		script.onerror = () => resolve();
-		document.head.appendChild(script);
-	});
-}
+let previewSeq = 0;
 
-function renderPreview() {
-	const marked = (window as unknown as { marked?: { parse: (s: string) => string } })
-		.marked;
-	if (!marked) {
-		previewHtml = "<p class='opacity-60'>预览组件加载失败</p>";
-		return;
-	}
-	const raw = marked.parse(body || "");
-	previewHtml = String(raw).replace(/<script[\s\S]*?<\/script>/gi, "");
+async function renderPreview() {
+	const seq = previewSeq + 1;
+	previewSeq = seq;
+	if (view === "edit") return;
+	const html = await renderMarkdownPreview(body || "");
+	// 只接受最后一次渲染结果，避免快速输入时旧结果覆盖新结果
+	if (seq === previewSeq) previewHtml = html;
 }
 
 $effect(() => {
-	// 正文或视图变化时刷新预览
+	// 正文或视图变化时刷新预览（轻微防抖，输入更跟手）
 	body;
-	if (view !== "edit") renderPreview();
+	view;
+	const timer = setTimeout(() => void renderPreview(), 150);
+	return () => clearTimeout(timer);
 });
 
-// ---------- 工具栏 ----------
-function insertSnippet(before: string, after = "", placeholder = "") {
+// ---------- 编辑辅助 ----------
+function focusAt(position: number) {
+	requestAnimationFrame(() => {
+		if (!textarea) return;
+		textarea.focus();
+		textarea.setSelectionRange(position, position);
+	});
+}
+
+/** 选区前后包裹文本；无选区时插入占位文字并选中它 */
+function wrapSelection(before: string, after = "", placeholder = "") {
 	if (!textarea) return;
 	const start = textarea.selectionStart ?? body.length;
 	const end = textarea.selectionEnd ?? start;
 	const selected = body.slice(start, end) || placeholder;
-	const next = `${body.slice(0, start)}${before}${selected}${after}${body.slice(end)}`;
-	body = next;
+	body = `${body.slice(0, start)}${before}${selected}${after}${body.slice(end)}`;
 	dirty = true;
 	requestAnimationFrame(() => {
 		if (!textarea) return;
 		textarea.focus();
-		const cursor = start + before.length + selected.length;
-		textarea.setSelectionRange(cursor, cursor);
+		textarea.setSelectionRange(start + before.length, start + before.length + selected.length);
 	});
 }
 
-const toolbar = [
-	{ icon: "bold" as const, title: "加粗", before: "**", after: "**", placeholder: "粗体" },
-	{ icon: "italic" as const, title: "斜体", before: "*", after: "*", placeholder: "斜体" },
-	{ icon: "heading" as const, title: "标题", before: "## ", after: "", placeholder: "标题" },
-	{ icon: "quote" as const, title: "引用", before: "> ", after: "", placeholder: "引用" },
-	{ icon: "code" as const, title: "代码块", before: "```ts\n", after: "\n```", placeholder: "代码" },
-	{ icon: "list" as const, title: "列表", before: "- ", after: "", placeholder: "列表项" },
-	{ icon: "link" as const, title: "链接", before: "[", after: "](https://)", placeholder: "链接文字" },
-	{ icon: "image" as const, title: "图片", before: "![", after: "](https://)", placeholder: "图片描述" },
+/** 行首前缀开关：已全部带前缀则移除，否则逐行添加 */
+function toggleLinePrefix(prefix: string) {
+	if (!textarea) return;
+	const start = textarea.selectionStart ?? 0;
+	const end = textarea.selectionEnd ?? start;
+	const lineStart = body.lastIndexOf("\n", start - 1) + 1;
+	const breakAt = body.indexOf("\n", end);
+	const lineEnd = breakAt === -1 ? body.length : breakAt;
+	const lines = (body.slice(lineStart, lineEnd) || "").split("\n");
+	const allPrefixed = lines.every((line) => line.startsWith(prefix));
+	const next = lines
+		.map((line) => (allPrefixed ? line.slice(prefix.length) : `${prefix}${line}`))
+		.join("\n");
+	body = `${body.slice(0, lineStart)}${next}${body.slice(lineEnd)}`;
+	dirty = true;
+	requestAnimationFrame(() => {
+		if (!textarea) return;
+		textarea.focus();
+		textarea.setSelectionRange(lineStart, lineStart + next.length);
+	});
+}
+
+/** 插入独立块级内容，自动补齐前后空行 */
+function insertBlock(text: string) {
+	if (!textarea) return;
+	const pos = textarea.selectionStart ?? body.length;
+	const before = body.slice(0, pos);
+	const after = body.slice(pos);
+	const lead = !before
+		? ""
+		: before.endsWith("\n\n")
+			? ""
+			: before.endsWith("\n")
+				? "\n"
+				: "\n\n";
+	const tail = after && !after.startsWith("\n") ? "\n" : "";
+	body = `${before}${lead}${text}${tail}${after}`;
+	dirty = true;
+	focusAt(pos + lead.length + text.length);
+}
+
+/** Tab / Shift+Tab 缩进 */
+function handleIndent(outdent: boolean) {
+	if (!textarea) return;
+	const start = textarea.selectionStart ?? 0;
+	const end = textarea.selectionEnd ?? start;
+	const lineStart = body.lastIndexOf("\n", start - 1) + 1;
+	const breakAt = body.indexOf("\n", end);
+	const lineEnd = breakAt === -1 ? body.length : breakAt;
+	const next = (body.slice(lineStart, lineEnd) || "")
+		.split("\n")
+		.map((line) => (outdent ? line.replace(/^ {1,2}/, "") : `  ${line}`))
+		.join("\n");
+	body = `${body.slice(0, lineStart)}${next}${body.slice(lineEnd)}`;
+	dirty = true;
+	requestAnimationFrame(() => {
+		if (!textarea) return;
+		textarea.focus();
+		textarea.setSelectionRange(lineStart, lineStart + next.length);
+	});
+}
+
+/** 回车时自动延续列表 / 任务列表 / 引用；空条目则结束该结构 */
+function continueList(event: KeyboardEvent) {
+	if (!textarea) return;
+	const pos = textarea.selectionStart ?? 0;
+	if (pos !== (textarea.selectionEnd ?? pos)) return;
+	const lineStart = body.lastIndexOf("\n", pos - 1) + 1;
+	const line = body.slice(lineStart, pos);
+
+	const dropMarker = () => {
+		body = `${body.slice(0, lineStart)}\n${body.slice(pos)}`;
+		focusAt(lineStart + 1);
+	};
+
+	const task = line.match(/^(\s*)[-*+] \[([ xX])\]\s*(.*)$/);
+	if (task) {
+		event.preventDefault();
+		if (!task[3]) return dropMarker();
+		const insert = `\n${task[1]}- [ ] `;
+		body = `${body.slice(0, pos)}${insert}${body.slice(pos)}`;
+		dirty = true;
+		return focusAt(pos + insert.length);
+	}
+
+	const bullet = line.match(/^(\s*)[-*+]\s+(.*)$/);
+	if (bullet) {
+		event.preventDefault();
+		if (!bullet[2]) return dropMarker();
+		const insert = `\n${bullet[1]}- `;
+		body = `${body.slice(0, pos)}${insert}${body.slice(pos)}`;
+		dirty = true;
+		return focusAt(pos + insert.length);
+	}
+
+	const ordered = line.match(/^(\s*)(\d+)[.)]\s+(.*)$/);
+	if (ordered) {
+		event.preventDefault();
+		if (!ordered[3]) return dropMarker();
+		const insert = `\n${ordered[1]}${Number(ordered[2]) + 1}. `;
+		body = `${body.slice(0, pos)}${insert}${body.slice(pos)}`;
+		dirty = true;
+		return focusAt(pos + insert.length);
+	}
+
+	const quote = line.match(/^(\s*)>\s?(.*)$/);
+	if (quote) {
+		event.preventDefault();
+		if (!quote[2]) return dropMarker();
+		const insert = `\n${quote[1]}> `;
+		body = `${body.slice(0, pos)}${insert}${body.slice(pos)}`;
+		dirty = true;
+		return focusAt(pos + insert.length);
+	}
+}
+
+function handleEditorKeydown(event: KeyboardEvent) {
+	if (!textarea) return;
+	if (event.ctrlKey || event.metaKey) {
+		const key = event.key.toLowerCase();
+		const shortcuts: Record<string, () => void> = {
+			b: () => wrapSelection("**", "**", "粗体"),
+			i: () => wrapSelection("*", "*", "斜体"),
+			k: () => void insertLink(),
+			e: () => wrapSelection("`", "`", "code"),
+			s: () => handleSaveDraft(),
+		};
+		const action = shortcuts[key];
+		if (action) {
+			event.preventDefault();
+			action();
+		}
+		return;
+	}
+	if (event.key === "Tab") {
+		event.preventDefault();
+		handleIndent(event.shiftKey);
+		return;
+	}
+	if (event.key === "Enter" && !event.shiftKey) {
+		continueList(event);
+	}
+}
+
+/** 分屏时预览跟随编辑区滚动 */
+let syncingScroll = false;
+function syncPreviewScroll() {
+	if (view !== "split" || syncingScroll || !textarea || !previewEl) return;
+	const fromRange = textarea.scrollHeight - textarea.clientHeight;
+	const toRange = previewEl.scrollHeight - previewEl.clientHeight;
+	if (fromRange <= 0 || toRange <= 0) return;
+	syncingScroll = true;
+	previewEl.scrollTop = (textarea.scrollTop / fromRange) * toRange;
+	requestAnimationFrame(() => {
+		syncingScroll = false;
+	});
+}
+
+// ---------- 工具栏 ----------
+type ToolIcon =
+	| "bold"
+	| "italic"
+	| "strike"
+	| "code"
+	| "layers"
+	| "heading"
+	| "text"
+	| "quote"
+	| "list"
+	| "orderedList"
+	| "task"
+	| "table"
+	| "link"
+	| "image"
+	| "divider"
+	| "callout"
+	| "details"
+	| "math"
+	| "footnote";
+
+interface ToolItem {
+	icon: ToolIcon;
+	title: string;
+	run: () => void;
+}
+
+function insertLink() {
+	const url = window.prompt("链接地址", "https://");
+	if (!url) return;
+	wrapSelection("[", `](${url})`, "链接文字");
+}
+
+function insertImage() {
+	const url = window.prompt("图片地址", "https://");
+	if (!url) return;
+	wrapSelection("![", `](${url})`, "图片描述");
+}
+
+function insertTable() {
+	insertBlock(
+		"| 列 1 | 列 2 | 列 3 |\n| --- | --- | --- |\n| 内容 | 内容 | 内容 |",
+	);
+}
+
+function insertFootnote() {
+	const next = (body.match(/\[\^[^\]]+\]:/g)?.length ?? 0) + 1;
+	wrapSelection(`[^${next}]`, "", "注释");
+	body = `${body.replace(/\s+$/, "")}\n\n[^${next}]: 注释内容\n`;
+	dirty = true;
+}
+
+const toolGroups: ToolItem[][] = [
+	[
+		{ icon: "bold", title: "加粗 (Ctrl+B)", run: () => wrapSelection("**", "**", "粗体") },
+		{ icon: "italic", title: "斜体 (Ctrl+I)", run: () => wrapSelection("*", "*", "斜体") },
+		{ icon: "strike", title: "删除线", run: () => wrapSelection("~~", "~~", "删除线") },
+		{ icon: "code", title: "行内代码 (Ctrl+E)", run: () => wrapSelection("`", "`", "code") },
+	],
+	[
+		{ icon: "heading", title: "二级标题", run: () => toggleLinePrefix("## ") },
+		{ icon: "text", title: "三级标题", run: () => toggleLinePrefix("### ") },
+		{ icon: "quote", title: "引用", run: () => toggleLinePrefix("> ") },
+	],
+	[
+		{ icon: "list", title: "无序列表", run: () => toggleLinePrefix("- ") },
+		{ icon: "orderedList", title: "有序列表", run: () => toggleLinePrefix("1. ") },
+		{ icon: "task", title: "任务列表", run: () => toggleLinePrefix("- [ ] ") },
+		{ icon: "table", title: "插入表格", run: insertTable },
+	],
+	[
+		{ icon: "link", title: "链接 (Ctrl+K)", run: insertLink },
+		{ icon: "image", title: "图片", run: insertImage },
+		{ icon: "divider", title: "分割线", run: () => insertBlock("---") },
+	],
+	[
+		{ icon: "layers", title: "代码块", run: () => insertBlock("```ts\n\n```") },
+		{
+			icon: "callout",
+			title: "提示块（GitHub Alert）",
+			run: () => insertBlock("> [!NOTE]\n> 提示内容"),
+		},
+		{
+			icon: "details",
+			title: "折叠块",
+			run: () => insertBlock(":::details[点击展开]\n内容\n:::"),
+		},
+		{
+			icon: "math",
+			title: "数学公式（KaTeX）",
+			run: () => insertBlock("$$\nE = mc^2\n$$"),
+		},
+		{ icon: "footnote", title: "脚注", run: insertFootnote },
+	],
+];
+
+const markdownHints = [
+	{
+		syntax: "> [!NOTE] 内容",
+		desc: "GitHub 提示块，另支持 TIP / IMPORTANT / WARNING / CAUTION",
+	},
+	{
+		syntax: ":::note[标题] … :::",
+		desc: "容器指令，支持 note/tip/warning/danger 等 20 余种",
+	},
+	{ syntax: ":::details[摘要] … :::", desc: "可折叠区块" },
+	{
+		syntax: "$$ E = mc^2 $$",
+		desc: "数学公式，行内用 $…$，块级用 $$…$$（KaTeX）",
+	},
+	{
+		syntax: '```ts title="demo.ts"',
+		desc: "代码块，支持语言、标题、行号与折叠",
+	},
+	{ syntax: "- [ ] 待办 / - [x] 已完成", desc: "任务列表" },
+	{ syntax: "| a | b |", desc: "表格，第二行写 | --- | --- |" },
+	{ syntax: "正文[^1] + 文末 [^1]: 注释", desc: "脚注" },
+	{ syntax: "[[文章slug|显示文字]]", desc: "Wiki 链接，链接到站内文章" },
+	{ syntax: "```mermaid", desc: "Mermaid 图表，构建后渲染" },
 ];
 
 // ---------- 标签 ----------
@@ -461,7 +717,6 @@ onMount(() => {
 		if (id) loadExisting(id);
 		else if (draftParam) loadDraft(draftParam);
 	});
-	ensureMarked().then(renderPreview);
 
 	const onBeforeUnload = (event: BeforeUnloadEvent) => {
 		if (dirty) {
@@ -864,18 +1119,23 @@ onMount(() => {
 			<div class="admin-card admin-card--bordered overflow-hidden">
 				{#if view !== "preview"}
 					<div
-						class="admin-scroll flex gap-1 overflow-x-auto border-b border-(--line-divider) px-3 py-2"
+						class="admin-md-toolbar admin-scroll flex items-center gap-0.5 overflow-x-auto border-b border-(--line-divider) px-3 py-2"
 					>
-						{#each toolbar as item}
-							<button
-								class="rounded-lg p-2 text-(--btn-content) transition-colors hover:bg-(--btn-plain-bg-hover)"
-								title={item.title}
-								onclick={() =>
-									insertSnippet(item.before, item.after, item.placeholder)}
-								type="button"
-							>
-								<AdminIcon name={item.icon} class="h-4 w-4" />
-							</button>
+						{#each toolGroups as group, groupIndex (groupIndex)}
+							{#if groupIndex > 0}
+								<span class="admin-md-toolbar__sep" aria-hidden="true"></span>
+							{/if}
+							{#each group as item (item.title)}
+								<button
+									class="admin-md-toolbar__btn"
+									title={item.title}
+									aria-label={item.title}
+									onclick={item.run}
+									type="button"
+								>
+									<AdminIcon name={item.icon} class="h-4 w-4" />
+								</button>
+							{/each}
 						{/each}
 					</div>
 				{/if}
@@ -890,10 +1150,15 @@ onMount(() => {
 							placeholder="用 Markdown 写下正文…"
 							bind:value={body}
 							oninput={() => (dirty = true)}
+							onkeydown={handleEditorKeydown}
+							onscroll={syncPreviewScroll}
 						></textarea>
 					{/if}
 					{#if view !== "edit"}
-						<div class="admin-preview admin-scroll rounded-none border-0">
+						<div
+							bind:this={previewEl}
+							class="admin-preview admin-scroll rounded-none border-0"
+						>
 							{#if body.trim()}
 								<!-- eslint-disable-next-line svelte/no-at-html-tags -->
 								{@html previewHtml}
@@ -903,6 +1168,22 @@ onMount(() => {
 						</div>
 					{/if}
 				</div>
+
+				<details class="border-t border-(--line-divider) px-4 py-3">
+					<summary
+						class="cursor-pointer text-sm font-bold text-(--btn-content)"
+					>
+						Markdown 语法速查（本主题支持的扩展）
+					</summary>
+					<div class="mt-3 grid gap-x-6 gap-y-1.5 text-xs md:grid-cols-2">
+						{#each markdownHints as item (item.syntax)}
+							<div class="flex flex-col">
+								<code class="admin-md-hint__code">{item.syntax}</code>
+								<span class="text-(--btn-content) opacity-70">{item.desc}</span>
+							</div>
+						{/each}
+					</div>
+				</details>
 			</div>
 		</div>
 	{/if}
