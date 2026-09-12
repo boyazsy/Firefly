@@ -61,6 +61,11 @@ function yamlScalar(value: unknown): string {
 	if (typeof value === "number") return Number.isFinite(value) ? String(value) : '""';
 	const raw = String(value ?? "");
 	if (raw === "") return '""';
+	// ISO 日期必须原样输出：一旦加引号 YAML 会解析成字符串，
+	// 而 posts schema 要求 published/updated 为 date 类型，会导致构建失败
+	if (/^\d{4}-\d{2}-\d{2}([T ]\d{2}:\d{2}(:\d{2})?(\.\d+)?(Z|[+-]\d{2}:?\d{2})?)?$/.test(raw)) {
+		return raw;
+	}
 	const needsQuote =
 		/[:#\-?{}[\]&*!|>'"%@`]/.test(raw) ||
 		/^\s|\s$/.test(raw) ||
