@@ -55,7 +55,16 @@ type AdminIconName =
 	| "arrowDown"
 	| "layers"
 	| "sliders"
-	| "palette";
+	| "palette"
+	| "strike"
+	| "orderedList"
+	| "task"
+	| "table"
+	| "divider"
+	| "math"
+	| "callout"
+	| "footnote"
+	| "details";
 
 interface Props {
 	name: AdminIconName;
@@ -130,6 +139,21 @@ const ICONS: Record<AdminIconName, string> = {
 	sliders: '<path d="M4 6h16"/><path d="M4 12h16"/><path d="M4 18h16"/><circle cx="9" cy="6" r="2"/><circle cx="15" cy="12" r="2"/><circle cx="10" cy="18" r="2"/>',
 	palette:
 		'<path d="M12 3a9 9 0 1 0 0 18c1.5 0 2-1 1.5-2s0-2 1.5-2h2A4 4 0 0 0 21 13c0-5-4-10-9-10Z"/><circle cx="7.5" cy="10.5" r="1"/><circle cx="10" cy="7" r="1"/><circle cx="15" cy="8" r="1"/>',
+	strike:
+		'<path d="M4 12h16"/><path d="M16.5 7.5A3.5 3.5 0 0 0 13 5h-2.2A3.3 3.3 0 0 0 7.6 8.4"/><path d="M7.5 16.5A3.5 3.5 0 0 0 11 19h2.2a3.3 3.3 0 0 0 3.2-3.4"/>',
+	orderedList:
+		'<path d="M9 6h12"/><path d="M9 12h12"/><path d="M9 18h12"/><path d="M3.5 5h1.2v3.2"/><path d="M3 12.5h2.2L3 16h2.4"/><path d="M3.4 17.6h1.6"/>',
+	task: '<rect x="2.5" y="3" width="5.5" height="5.5" rx="1.4"/><path d="m4.2 5.8 1.3 1.3L7.2 5.4"/><rect x="2.5" y="15" width="5.5" height="5.5" rx="1.4"/><path d="M10 5.8h11"/><path d="M10 17.8h11"/>',
+	table:
+		'<rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 10h18"/><path d="M9 10v10"/><path d="M15 10v10"/>',
+	divider: '<path d="M3 12h18"/><path d="M6 7h12"/><path d="M6 17h12"/>',
+	math: '<path d="M4 8h8"/><path d="M8 4v8"/><path d="M4 18h8"/><path d="M14 8h7"/><path d="M14 15h7"/>',
+	callout:
+		'<rect x="3" y="4" width="18" height="16" rx="2"/><path d="M12 8.5v4"/><path d="M12 16h.01"/>',
+	footnote:
+		'<path d="M4 20h11"/><path d="M8.5 20V5.5L5 8"/><path d="M15 11h6"/><path d="M18 11v9"/>',
+	details:
+		'<rect x="3" y="4" width="18" height="16" rx="2"/><path d="m8 10 4 4 4-4"/>',
 };
 
 const filled = new Set<AdminIconName>(["github"]);
