@@ -101,7 +101,7 @@ export const siteConfig: SiteConfig = {
 			alt: "🍀",
 		},
 		// 导航栏标题
-		title: "辰辰有天空",
+		title: "辰辰的天空",
 		// 全宽导航栏，导航栏是否占满屏幕宽度
 		widthFull: false,
 		// 导航菜单对齐方式，left：左对齐，center：居中
@@ -324,7 +324,7 @@ export const siteConfig: SiteConfig = {
 	pages: resolvePageToggles({
 		friends: false,
 		guestbook: true,
-		dynamic: true,
+		dynamic: false,
 		projects: true,
 		gallery: true,
 		booknav: false,
