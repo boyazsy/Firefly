@@ -248,7 +248,8 @@ function extractMath(text: string, slots: Slot[]): string {
 			addMathSlot(slots, tex.trim(), true),
 		)
 		.replace(
-			/(^|[^\\$\w])\$([^$\n]+?)\$(?!\$)/g,
+			// 要求 $ 紧贴内容（前后不留空格），避免把 "$5 和 $10" 这类价格误判成公式
+			/(^|[^\\$\w])\$(?!\s)([^$\n]+?)(?<!\s)\$(?!\w)/g,
 			(_match, prefix: string, tex: string) =>
 				`${prefix}${addMathSlot(slots, tex, false)}`,
 		);
