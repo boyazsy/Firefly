@@ -249,4 +249,95 @@ export const LinkPresets: Record<string, NavBarLink> = {
 	},
 };
 
-export const navBarConfig: NavBarConfig = getDynamicNavBarConfig();
+export const navBarConfig: NavBarConfig = {
+	links: [
+		{
+			name: "主页",
+			url: "/",
+			icon: "material-symbols:home",
+		},
+		{
+			name: "文章",
+			url: "#",
+			icon: "material-symbols:article",
+			children: [
+				{
+					name: "归档",
+					url: "/archive/",
+					icon: "material-symbols:archive",
+				},
+				{
+					name: "分类",
+					url: "/categories/",
+					icon: "material-symbols:folder-open-rounded",
+				},
+				{
+					name: "标签",
+					url: "/tags/",
+					icon: "material-symbols:tag-rounded",
+				},
+				{
+					name: "系列",
+					url: "/series/",
+					icon: "material-symbols:layers",
+				},
+			],
+		},
+		{
+			name: "社交",
+			url: "#",
+			icon: "material-symbols:group",
+			children: [
+				{
+					name: "友链",
+					url: "/friends/",
+					icon: "material-symbols:link-2-rounded",
+					pageKey: "friends",
+				},
+				{
+					name: "留言",
+					url: "/guestbook/",
+					icon: "material-symbols:chat",
+					pageKey: "guestbook",
+				},
+			],
+		},
+		{
+			name: "我的",
+			url: "#",
+			icon: "material-symbols:person",
+			children: [
+				{
+					name: "动态",
+					url: "/dynamic/",
+					icon: "material-symbols:forum-rounded",
+					pageKey: "dynamic",
+				},
+				{
+					name: "项目",
+					url: "/projects/",
+					icon: "material-symbols:rocket-launch",
+					pageKey: "projects",
+				},
+				{
+					name: "相册",
+					url: "/gallery/",
+					icon: "material-symbols:photo-library",
+					pageKey: "gallery",
+				},
+				{
+					name: "书签导航",
+					url: "/booknav/",
+					icon: "material-symbols:bookmarks",
+					pageKey: "booknav",
+				},
+			],
+		},
+		{
+			name: "关于",
+			url: "/about/",
+			icon: "material-symbols:info",
+			children: [],
+		},
+	],
+};
