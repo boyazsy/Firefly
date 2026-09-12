@@ -180,7 +180,7 @@
 		<div class="admin-alert admin-alert--info">
 			<AdminIcon name="alert" class="mt-0.5 h-4 w-4 flex-none" />
 			<span>
-				下载后把文件覆盖到项目里对应的 <code>src/config/</code> 路径，重新构建后生效。
+				已配置 GitHub 的话，直接点下方「提交到 GitHub 触发构建」，改动会提交到仓库并自动重新构建，无需手动覆盖文件。
 				生成的代码会保留原文件的 import、其它导出与文件级注释。
 			</span>
 		</div>
