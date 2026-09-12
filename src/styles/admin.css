@@ -417,6 +417,191 @@
 	font-weight: 600;
 }
 
+/* ---------- 编辑器工具栏 ---------- */
+.admin-md-toolbar__btn {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	border-radius: 0.5rem;
+	padding: 0.35rem;
+	color: var(--btn-content);
+	white-space: nowrap;
+	transition: background-color 0.15s ease, color 0.15s ease;
+}
+.admin-md-toolbar__btn:hover {
+	background: var(--btn-plain-bg-hover);
+	color: var(--primary);
+}
+.admin-md-toolbar__sep {
+	width: 1px;
+	height: 1rem;
+	margin: 0 0.25rem;
+	background: var(--line-divider);
+	flex: none;
+}
+.admin-md-hint__code {
+	display: inline-block;
+	font-family: var(--font-code, ui-monospace, monospace);
+	font-size: 0.75rem;
+	background: var(--btn-regular-bg);
+	color: var(--btn-content);
+	padding: 0.1rem 0.35rem;
+	border-radius: 0.35rem;
+	word-break: break-all;
+}
+
+/* ---------- 预览扩展语法 ---------- */
+.admin-preview .md-callout {
+	margin: 0.875rem 0;
+	padding: 0.75rem 1rem;
+	border-radius: 0.75rem;
+	border: 1px solid var(--line-divider);
+	border-left: 4px solid var(--primary);
+	background: var(--btn-regular-bg);
+}
+.admin-preview .md-callout__title {
+	font-size: 0.75rem;
+	font-weight: 700;
+	letter-spacing: 0.04em;
+	margin-bottom: 0.25rem;
+	color: var(--primary);
+}
+.admin-preview .md-callout__body > :first-child {
+	margin-top: 0;
+}
+.admin-preview .md-callout__body > :last-child {
+	margin-bottom: 0;
+}
+.admin-preview .md-callout--note {
+	border-left-color: oklch(0.62 0.16 250);
+}
+.admin-preview .md-callout--note .md-callout__title {
+	color: oklch(0.55 0.16 250);
+}
+.admin-preview .md-callout--tip {
+	border-left-color: oklch(0.62 0.14 150);
+}
+.admin-preview .md-callout--tip .md-callout__title {
+	color: oklch(0.55 0.14 150);
+}
+.admin-preview .md-callout--important {
+	border-left-color: oklch(0.6 0.16 305);
+}
+.admin-preview .md-callout--important .md-callout__title {
+	color: oklch(0.55 0.16 305);
+}
+.admin-preview .md-callout--warning {
+	border-left-color: oklch(0.72 0.15 70);
+}
+.admin-preview .md-callout--warning .md-callout__title {
+	color: oklch(0.6 0.15 70);
+}
+.admin-preview .md-callout--caution {
+	border-left-color: oklch(0.6 0.18 25);
+}
+.admin-preview .md-callout--caution .md-callout__title {
+	color: oklch(0.55 0.18 25);
+}
+
+.admin-preview .md-code {
+	margin: 0.875rem 0;
+	border: 1px solid var(--line-divider);
+	border-radius: 0.75rem;
+	overflow: hidden;
+	background: var(--codeblock-bg);
+}
+.admin-preview .md-code__bar {
+	display: flex;
+	align-items: center;
+	gap: 0.5rem;
+	padding: 0.3rem 0.75rem;
+	border-bottom: 1px solid var(--line-divider);
+	font-size: 0.7rem;
+	font-family: var(--font-code, ui-monospace, monospace);
+	color: #cfcfcf;
+}
+.admin-preview .md-code__lang {
+	font-weight: 700;
+	letter-spacing: 0.03em;
+	text-transform: uppercase;
+}
+.admin-preview .md-code .md-code__title {
+	opacity: 0.8;
+}
+.admin-preview .md-code pre {
+	margin: 0;
+	border-radius: 0;
+	background: transparent;
+}
+.admin-preview .md-placeholder {
+	margin: 0.5rem 0.75rem;
+	padding: 0.4rem 0.6rem;
+	border-radius: 0.5rem;
+	border: 1px dashed var(--line-divider);
+	font-size: 0.75rem;
+	color: #cfcfcf;
+}
+.admin-preview .md-code-group {
+	border: 1px dashed var(--line-divider);
+	border-radius: 0.75rem;
+	padding: 0.5rem;
+	margin: 0.875rem 0;
+}
+.admin-preview .md-code-group__tag {
+	font-size: 0.7rem;
+	opacity: 0.75;
+	margin-bottom: 0.25rem;
+}
+.admin-preview .md-details {
+	margin: 0.875rem 0;
+	padding: 0.5rem 0.875rem;
+	border: 1px solid var(--line-divider);
+	border-radius: 0.75rem;
+	background: var(--btn-regular-bg);
+}
+.admin-preview .md-details summary {
+	cursor: pointer;
+	font-weight: 600;
+}
+.admin-preview .md-footnotes {
+	margin-top: 1.5rem;
+	font-size: 0.85rem;
+	opacity: 0.9;
+}
+.admin-preview .md-fnref {
+	font-size: 0.7em;
+}
+.admin-preview .md-math-fallback {
+	font-family: var(--font-code, ui-monospace, monospace);
+}
+
+/* 代码着色 */
+.md-tok--comment {
+	color: #7c8b9a;
+	font-style: italic;
+}
+.md-tok--string {
+	color: #a5d6a7;
+}
+.md-tok--number {
+	color: #f7b955;
+}
+.md-tok--kw {
+	color: #c792ea;
+}
+.md-tok--fn {
+	color: #82aaff;
+}
+
+/* 任务列表 */
+.admin-preview ul:has(> li > input[type="checkbox"]) {
+	list-style: none;
+	padding-left: 0.25rem;
+}
+.admin-preview li > input[type="checkbox"] {
+	margin-right: 0.4rem;
+}
+
 /* 骨架屏 */
 .admin-skeleton {
 	background: linear-gradient(
