@@ -213,6 +213,8 @@
 	font-size: 0.6875rem;
 	line-height: 1.25rem;
 	font-weight: 500;
+	white-space: nowrap;
+	flex: none;
 }
 .admin-badge--draft {
 	background: oklch(0.7 0.14 60 / 0.18);
