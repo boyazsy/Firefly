@@ -2,39 +2,39 @@ import type { BackgroundWallpaperConfig } from "@/types/backgroundWallpaper";
 
 export const backgroundWallpaper: BackgroundWallpaperConfig = {
 	// 壁纸模式："banner" 横幅壁纸，"fullscreen" 全屏壁纸，"overlay" 覆盖透明，"none" 纯色背景无壁纸
-	mode: "banner",
+	mode: "none",
 	// 是否启用背景视频播放，配置后将在导航栏显示视频播放按钮
 	playerEnable: true,
-	/**
-	 * 背景图片配置
-	 * 图片路径支持三种格式：
-	 * 1. public 目录（以 "/" 开头，不优化）："/assets/images/banner.avif"
-	 * 2. src 目录（不以 "/" 开头，自动优化但会增加构建时间，推荐）："assets/images/banner.avif"
-	 * 3. 远程 URL："https://example.com/banner.jpg"
-	 * 注意：远程URL和public目录的图片不会被优化，请确保图片体积足够小以免影响加载速度
-	 *
-	 * 建议不要替换d1-d6，m1-m6这些默认示例图片，但你可以删除掉节省空间
-	 * 因为以后可能会更换示例图片，导致你自定义的图片被覆盖
-	 * 所以建议使用自己的图片的时候命名为其他名称，不要使用d1-d6，m1-m6这些名称
-	 *
-	 * 如果只使用一张图片或者使用随机图API，推荐直接使用字符串格式：
-	 * desktop: "https://t.alcy.cc/pc",   // 随机图API
-	 * desktop: "assets/images/DesktopWallpaper/d1.avif", // 单张图片
-	 *
-	 * mobile: "https://t.alcy.cc/mp", // 随机图API
-	 * mobile: "assets/images/MobileWallpaper/m1.avif", // 单张图片
-	 *
-	 * 支持配置多张图片（数组），每次刷新页面随机显示一张：
-	 * desktop: [
-	 * "assets/images/DesktopWallpaper/d1.avif",
-	 * "assets/images/DesktopWallpaper/d2.avif",
-	 * ],
-	 *
-	 * mobile:[
-	 *   "assets/images/MobileWallpaper/m1.avif",
-	 *   "assets/images/MobileWallpaper/m2.avif",
-	 * ],
-	 */
+		/**
+		 * 背景图片配置
+		 * 图片路径支持三种格式：
+		 * 1. public 目录（以 "/" 开头，不优化）："/assets/images/banner.avif"
+		 * 2. src 目录（不以 "/" 开头，自动优化但会增加构建时间，推荐）："assets/images/banner.avif"
+		 * 3. 远程 URL："https://example.com/banner.jpg"
+		 * 注意：远程URL和public目录的图片不会被优化，请确保图片体积足够小以免影响加载速度
+		 *
+		 * 建议不要替换d1-d6，m1-m6这些默认示例图片，但你可以删除掉节省空间
+		 * 因为以后可能会更换示例图片，导致你自定义的图片被覆盖
+		 * 所以建议使用自己的图片的时候命名为其他名称，不要使用d1-d6，m1-m6这些名称
+		 *
+		 * 如果只使用一张图片或者使用随机图API，推荐直接使用字符串格式：
+		 * desktop: "https://t.alcy.cc/pc",   // 随机图API
+		 * desktop: "assets/images/DesktopWallpaper/d1.avif", // 单张图片
+		 *
+		 * mobile: "https://t.alcy.cc/mp", // 随机图API
+		 * mobile: "assets/images/MobileWallpaper/m1.avif", // 单张图片
+		 *
+		 * 支持配置多张图片（数组），每次刷新页面随机显示一张：
+		 * desktop: [
+		 * "assets/images/DesktopWallpaper/d1.avif",
+		 * "assets/images/DesktopWallpaper/d2.avif",
+		 * ],
+		 *
+		 * mobile:[
+		 *   "assets/images/MobileWallpaper/m1.avif",
+		 *   "assets/images/MobileWallpaper/m2.avif",
+		 * ],
+		 */
 	src: {
 		// 桌面背景图片（支持单张或多张随机）
 		// desktop: "assets/images/DesktopWallpaper/d1.avif",
@@ -103,57 +103,24 @@ export const backgroundWallpaper: BackgroundWallpaperConfig = {
 			linksEnable: true,
 			// 首页横幅标题下方的链接图标（可选，支持 showName 显示文字）
 			// 图标支持 Iconify 格式：fa7-brands:github、fa7-solid:envelope、mdi:rss 等
-			links: [
-				{
-					name: "GitHub",
-					icon: "fa7-brands:github",
-					url: "https://github.com/CuteLeaf/Firefly",
-					showName: true,
-				},
-				{
-					name: "Email",
-					icon: "fa7-solid:envelope",
-					url: "mailto:xiaye@msn.com",
-				},
-				{
-					name: "Sponsor",
-					icon: "material-symbols:favorite",
-					url: "https://blog.cuteleaf.cn/sponsor/",
-				},
-				{
-					name: "RSS",
-					icon: "fa7-solid:rss",
-					url: "/rss/",
-				},
-			],
+			links: [],
 		},
-		// 壁纸轮播配置，横幅壁纸和全屏壁纸共享，仅在配置多张图片时生效
 		carousel: {
-			// 是否启用壁纸轮播；关闭时保持每次刷新随机显示一张
 			enable: false,
-			// 轮播切换间隔（毫秒）
 			interval: 5000,
-			// 过渡效果: 'fade' 渐变 | 'zoom' 缩放 | 'slide' 滑动 | 'kenburns' 旋转木马
 			transitionEffect: "zoom",
 		},
-		// 水波纹动画效果配置，开启会影响页面性能，增加内存占用，请根据自己的喜好开启
 		waves: {
 			enable: {
-				// 桌面端是否启用水波纹动画效果
 				desktop: true,
-				// 移动端是否启用水波纹动画效果
 				mobile: true,
 			},
 		},
-		// 渐变过渡效果配置，当水波纹关闭时自动启用，提供壁纸底部到背景色的平滑过渡
 		gradient: {
 			enable: {
-				// 桌面端是否启用渐变过渡
 				desktop: true,
-				// 移动端是否启用渐变过渡
 				mobile: true,
 			},
-			// 渐变高度
 			height: "10%",
 		},
 	},
