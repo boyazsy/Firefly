@@ -18,12 +18,6 @@ const title = i18n(I18nKey.adminEditor);
 
 <MainGridLayout title={title} description="撰写与编辑文章" hideSidebars>
     <meta slot="head" name="robots" content="noindex, nofollow" />
-    <script
-        is:inline
-        slot="head"
-        src={url("/assets/js/marked.min.js")}
-        defer
-    ></script>
 
     <div class="mx-auto w-full max-w-[92rem] px-1 py-2 md:px-0" data-pagefind-ignore>
         <PostEditor
@@ -34,7 +28,6 @@ const title = i18n(I18nKey.adminEditor);
             defaults={adminConfig.defaults}
             githubDefault={adminConfig.github}
             maxLocalDrafts={adminConfig.maxLocalDrafts}
-            markedUrl={url("/assets/js/marked.min.js")}
         />
     </div>
 </MainGridLayout>
