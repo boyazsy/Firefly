@@ -25,7 +25,8 @@ export type SettingsEditor =
 	| "wallpaper"
 	| "navbar"
 	| "sidebar"
-	| "widgets";
+	| "widgets"
+	| "gallery";
 
 /** 设置单元在侧边导航中的分组 */
 export type SettingsGroup =
