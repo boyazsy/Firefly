@@ -205,6 +205,51 @@
 			{#if active}
 				<div class="admin-field__hint">{active.file}</div>
 				<pre class="admin-code">{active.code}</pre>
+
+				<!-- 操作按钮：紧靠代码块下方 -->
+				<div class="flex flex-wrap gap-2">
+					<button
+						type="button"
+						class="admin-btn admin-btn--ghost admin-btn--sm"
+						disabled={!active || copying}
+						onclick={copyActive}
+					>
+						<AdminIcon name="copy" class="h-3.5 w-3.5" />
+						复制
+					</button>
+					<button
+						type="button"
+						class="admin-btn admin-btn--regular admin-btn--sm"
+						disabled={!active}
+						onclick={downloadActive}
+					>
+						<AdminIcon name="download" class="h-3.5 w-3.5" />
+						下载此文件
+					</button>
+					<button
+						type="button"
+						class="admin-btn admin-btn--regular admin-btn--sm"
+						disabled={generated.length === 0}
+						onclick={downloadAll}
+					>
+						<AdminIcon name="download" class="h-3.5 w-3.5" />
+						下载全部
+					</button>
+					<button
+						type="button"
+						class="admin-btn admin-btn--primary admin-btn--sm"
+						disabled={generated.length === 0 || submitting || !settings.token}
+						onclick={submitToGitHub}
+					>
+						<AdminIcon name="github" class="h-3.5 w-3.5" />
+						{submitting ? "提交中…" : "提交到 GitHub 触发构建"}
+					</button>
+				</div>
+				{#if !settings.token}
+					<span class="admin-field__hint">
+						未填写 GitHub 访问令牌，请先在「GitHub 发布」里配置
+					</span>
+				{/if}
 			{/if}
 
 			{#if submitLog.length > 0}
@@ -219,50 +264,4 @@
 			{/if}
 		{/if}
 	</div>
-
-	<footer class="admin-drawer__foot">
-		<div class="flex flex-wrap gap-2">
-			<button
-				type="button"
-				class="admin-btn admin-btn--ghost admin-btn--sm"
-				disabled={!active || copying}
-				onclick={copyActive}
-			>
-				<AdminIcon name="copy" class="h-3.5 w-3.5" />
-				复制
-			</button>
-			<button
-				type="button"
-				class="admin-btn admin-btn--regular admin-btn--sm"
-				disabled={!active}
-				onclick={downloadActive}
-			>
-				<AdminIcon name="download" class="h-3.5 w-3.5" />
-				下载此文件
-			</button>
-			<button
-				type="button"
-				class="admin-btn admin-btn--regular admin-btn--sm"
-				disabled={generated.length === 0}
-				onclick={downloadAll}
-			>
-				<AdminIcon name="download" class="h-3.5 w-3.5" />
-				下载全部
-			</button>
-		</div>
-		<button
-			type="button"
-			class="admin-btn admin-btn--primary admin-btn--sm admin-btn--block"
-			disabled={generated.length === 0 || submitting || !settings.token}
-			onclick={submitToGitHub}
-		>
-			<AdminIcon name="github" class="h-3.5 w-3.5" />
-			{submitting ? "提交中…" : "提交到 GitHub 触发构建"}
-		</button>
-		{#if !settings.token}
-			<span class="admin-field__hint">
-				未填写 GitHub 访问令牌，请先在「GitHub 发布」里配置
-			</span>
-		{/if}
-	</footer>
 </aside>
