@@ -22,8 +22,9 @@ import {
 	type GitHubSettings,
 	saveGitHubSettings,
 } from "@/utils/admin-drafts";
-	import AdminDrafts from "./AdminDrafts.svelte";
-	import AdminIcon from "./AdminIcon.svelte";
+import AdminDrafts from "./AdminDrafts.svelte";
+import AdminGallery from "./AdminGallery.svelte";
+import AdminIcon from "./AdminIcon.svelte";
 	import AdminLogin from "./AdminLogin.svelte";
 	import AdminOverview from "./AdminOverview.svelte";
 	import AdminPostList from "./AdminPostList.svelte";
@@ -48,12 +49,17 @@ const {
 	maxLocalDrafts,
 }: Props = $props();
 
-type TabKey = "overview" | "posts" | "drafts" | "settings";
+type TabKey = "overview" | "posts" | "drafts" | "gallery" | "settings";
 
-const tabs: { key: TabKey; label: string; icon: "dashboard" | "post" | "save" | "settings" }[] = [
+const tabs: {
+	key: TabKey;
+	label: string;
+	icon: "dashboard" | "post" | "save" | "image" | "settings";
+}[] = [
 	{ key: "overview", label: "概览", icon: "dashboard" },
 	{ key: "posts", label: "文章", icon: "post" },
 	{ key: "drafts", label: "草稿", icon: "save" },
+	{ key: "gallery", label: "相册", icon: "image" },
 	{ key: "settings", label: "设置", icon: "settings" },
 ];
 
@@ -254,6 +260,8 @@ onMount(() => {
 					notify("草稿已删除", "success");
 				}}
 			/>
+		{:else if tab === "gallery"}
+			<AdminGallery {settingsUrl} github={githubTarget} onNotify={notify} />
 		{:else}
 			<AdminSettingsHub
 				{settingsUrl}
