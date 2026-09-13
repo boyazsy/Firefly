@@ -27,6 +27,7 @@
 	import SettingsSiteAdvanced from "./SettingsSiteAdvanced.svelte";
 	import SettingsSiteBasic from "./SettingsSiteBasic.svelte";
 	import SettingsWallpaper from "./SettingsWallpaper.svelte";
+	import SettingsGallery from "./SettingsGallery.svelte";
 	import SettingsWidgets from "./SettingsWidgets.svelte";
 
 	interface Props {
@@ -320,6 +321,11 @@
 						<SettingsSidebar bind:value={units[activeIndex].value} />
 					{:else if activeUnit.meta.editor === "widgets"}
 						<SettingsWidgets bind:value={units[activeIndex].value} />
+					{:else if activeUnit.meta.editor === "gallery"}
+						<SettingsGallery
+							bind:value={units[activeIndex].value}
+							{settings}
+						/>
 					{:else if activeUnit.meta.kind === "list"}
 						<AdminArrayEditor
 							bind:value={units[activeIndex].value}
