@@ -87,6 +87,15 @@
 	);
 	const githubReady = $derived(Boolean(github?.owner && github?.repo && github?.token));
 
+	/** 相册目录里的文本文件（如 urls.txt），可在线查看和编辑 */
+	const TEXT_FILE_RE = /\.(txt|md|csv|json)$/i;
+	function isTextFile(name: string): boolean {
+		return TEXT_FILE_RE.test(name);
+	}
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	const imageFiles = $derived(images.filter((entry) => !isTextFile(entry.name)));
+	const textFiles = $derived(images.filter((entry) => isTextFile(entry.name)));
+
 	async function load() {
 		loading = true;
 		try {
@@ -244,6 +253,7 @@
 		loadingImages = true;
 		imageMessage = "";
 		images = [];
+		editingText = null;
 		const result = await listRepoDir(github, `public/gallery/${albumId}`);
 		loadingImages = false;
 		if (!result.ok || !result.data) {
@@ -302,6 +312,74 @@
 	function formatSize(size: number): string {
 		if (size >= 1024 * 1024) return `${(size / 1024 / 1024).toFixed(1)} MB`;
 		return `${Math.max(1, Math.round(size / 1024))} KB`;
+	}
+
+	// ── 文本文件（urls.txt 等）在线编辑 ──
+	let editingText = $state<RepoDirEntry | null>(null);
+	let textContent = $state("");
+	let textOriginal = $state("");
+	let loadingText = $state(false);
+	let savingText = $state(false);
+	const textDirty = $derived(textContent !== textOriginal);
+
+	async function openTextEditor(entry: RepoDirEntry) {
+		if (!github) return;
+		editingText = entry;
+		textContent = "";
+		textOriginal = "";
+		loadingText = true;
+		const result = await fetchRepoFile(github, entry.path);
+		loadingText = false;
+		if (!result.ok || !result.data) {
+			onNotify(`读取 ${entry.name} 失败：${result.message}`, "error");
+			editingText = null;
+			return;
+		}
+		textContent = result.data.content;
+		textOriginal = result.data.content;
+	}
+
+	async function saveTextFile() {
+		if (!github || !editingText || !textDirty) return;
+		savingText = true;
+		const result = await commitRepoFile(
+			github,
+			editingText.path,
+			textContent,
+			`chore(gallery): 更新 ${editingText.name}`,
+			editingText.sha,
+		);
+		savingText = false;
+		if (!result.ok) {
+			onNotify(`保存失败：${result.message}`, "error");
+			return;
+		}
+		onNotify(`已保存 ${editingText.name}，等待构建生效（约 3-5 分钟）`);
+		editingText = null;
+		await loadImages(manageAlbumId);
+	}
+
+	/** urls.txt 不存在时一键创建模板 */
+	async function createUrlsFile() {
+		if (!github || !manageAlbumId) return;
+		const target = "public/gallery/" + manageAlbumId + "/urls.txt";
+		if (
+			!confirm(
+				`在相册「${manageAlbumId}」里创建 urls.txt 吗？\n每行填一个远程图片地址，# 开头的行是注释，构建时会与本地图片一起展示。`,
+			)
+		) {
+			return;
+		}
+		savingText = true;
+		const template = "# 每行一个图片地址，# 开头的行为注释\n# https://example.com/photo.jpg\n";
+		const result = await commitRepoFile(github, target, template, "chore(gallery): 新建 urls.txt");
+		savingText = false;
+		if (!result.ok) {
+			onNotify(`创建失败：${result.message}`, "error");
+			return;
+		}
+		onNotify("已创建 urls.txt，等待构建生效");
+		await loadImages(manageAlbumId);
 	}
 
 	$effect(() => {
@@ -418,6 +496,27 @@
 									<AdminIcon name="refresh" class="h-3.5 w-3.5" />
 									刷新
 								</button>
+								{#if textFiles.length > 0}
+									<button
+										type="button"
+										class="admin-btn admin-btn--regular admin-btn--sm"
+										disabled={loadingImages || uploading}
+										onclick={() => textFiles[0] && openTextEditor(textFiles[0])}
+									>
+										<AdminIcon name="edit" class="h-3.5 w-3.5" />
+										编辑 {textFiles[0]?.name ?? "urls.txt"}
+									</button>
+								{:else}
+									<button
+										type="button"
+										class="admin-btn admin-btn--ghost admin-btn--sm"
+										disabled={loadingImages || uploading || savingText}
+										onclick={createUrlsFile}
+									>
+										<AdminIcon name="plus" class="h-3.5 w-3.5" />
+										新建 urls.txt
+									</button>
+								{/if}
 								<input
 									bind:this={imageInput}
 									class="hidden"
@@ -438,42 +537,126 @@
 								<span class="admin-field__hint">{imageMessage}</span>
 							{/if}
 
-							{#if images.length > 0}
-								<div class="admin-gallery-grid">
-									{#each images as image (image.sha)}
-										<figure class="admin-gallery-item">
-											{#if image.downloadUrl}
-												<img
-													class="admin-gallery-item__img"
-													src={image.downloadUrl}
-													alt={image.name}
-													loading="lazy"
-												/>
-											{:else}
-												<div class="admin-gallery-item__img admin-gallery-item__img--empty">
-													<AdminIcon name="image" class="h-6 w-6" />
-												</div>
-											{/if}
-											<figcaption class="admin-gallery-item__meta">
-												<span class="admin-gallery-item__name" title={image.name}>
-													{image.name}
-												</span>
-												<span class="admin-gallery-item__size">{formatSize(image.size)}</span>
+						{#if imageFiles.length > 0 || textFiles.length > 0}
+							<div class="admin-gallery-grid">
+								{#each imageFiles as image (image.sha)}
+									<figure class="admin-gallery-item">
+										{#if image.downloadUrl}
+											<img
+												class="admin-gallery-item__img"
+												src={image.downloadUrl}
+												alt={image.name}
+												loading="lazy"
+											/>
+										{:else}
+											<div class="admin-gallery-item__img admin-gallery-item__img--empty">
+												<AdminIcon name="image" class="h-6 w-6" />
+											</div>
+										{/if}
+										<figcaption class="admin-gallery-item__meta">
+											<span class="admin-gallery-item__name" title={image.name}>
+												{image.name}
+											</span>
+											<span class="admin-gallery-item__size">{formatSize(image.size)}</span>
+											<button
+												type="button"
+												class="admin-btn admin-btn--danger admin-btn--sm"
+												disabled={deletingName === image.name}
+												aria-label="删除 {image.name}"
+												onclick={() => removeImage(image)}
+											>
+												<AdminIcon name="trash" class="h-3.5 w-3.5" />
+												{deletingName === image.name ? "删除中…" : "删除"}
+											</button>
+										</figcaption>
+									</figure>
+								{/each}
+								{#each textFiles as file (file.sha)}
+									<figure class="admin-gallery-item">
+										<button
+											type="button"
+											class="admin-gallery-item__img admin-gallery-item__img--empty"
+											title="点击查看/编辑 {file.name}"
+											onclick={() => openTextEditor(file)}
+										>
+											<AdminIcon name="save" class="h-6 w-6" />
+										</button>
+										<figcaption class="admin-gallery-item__meta">
+											<span class="admin-gallery-item__name" title={file.name}>
+												{file.name}
+											</span>
+											<span class="admin-gallery-item__size">{formatSize(file.size)}</span>
+											<div class="flex w-full gap-1">
+												<button
+													type="button"
+													class="admin-btn admin-btn--regular admin-btn--sm flex-1"
+													onclick={() => openTextEditor(file)}
+												>
+													<AdminIcon name="edit" class="h-3.5 w-3.5" />
+													查看/编辑
+												</button>
 												<button
 													type="button"
 													class="admin-btn admin-btn--danger admin-btn--sm"
-													disabled={deletingName === image.name}
-													aria-label="删除 {image.name}"
-													onclick={() => removeImage(image)}
+													disabled={deletingName === file.name}
+													aria-label="删除 {file.name}"
+													onclick={() => removeImage(file)}
 												>
 													<AdminIcon name="trash" class="h-3.5 w-3.5" />
-													{deletingName === image.name ? "删除中…" : "删除"}
+													{deletingName === file.name ? "删除中…" : "删除"}
 												</button>
-											</figcaption>
-										</figure>
-									{/each}
+											</div>
+										</figcaption>
+									</figure>
+								{/each}
+							</div>
+						{/if}
+
+						<!-- 文本文件在线编辑器 -->
+						{#if editingText}
+							<div class="admin-card admin-card--bordered p-3">
+								<div class="admin-section__title">
+									<AdminIcon name="edit" class="h-4 w-4" />
+									<span>编辑 {editingText.name}</span>
 								</div>
-							{/if}
+								<span class="admin-field__hint">
+									每行一个图片地址，# 开头的行为注释；保存后自动提交仓库并触发构建
+								</span>
+								{#if loadingText}
+									<span class="admin-field__hint">正在读取文件内容…</span>
+								{:else}
+									<textarea
+										class="admin-textarea font-mono"
+										rows="10"
+										spellcheck="false"
+										placeholder={"# 每行一个图片地址\n# https://example.com/photo.jpg"}
+										bind:value={textContent}
+									></textarea>
+									<div class="admin-field__row">
+										<button
+											type="button"
+											class="admin-btn admin-btn--primary admin-btn--sm"
+											disabled={savingText || !textDirty}
+											onclick={saveTextFile}
+										>
+											<AdminIcon name="check" class="h-3.5 w-3.5" />
+											{savingText ? "保存中…" : "保存并提交"}
+										</button>
+										<button
+											type="button"
+											class="admin-btn admin-btn--ghost admin-btn--sm"
+											disabled={savingText}
+											onclick={() => (editingText = null)}
+										>
+											取消
+										</button>
+										{#if !textDirty}
+											<span class="admin-field__hint">内容未修改</span>
+										{/if}
+									</div>
+								{/if}
+							</div>
+						{/if}
 						</div>
 					{/if}
 				</div>
