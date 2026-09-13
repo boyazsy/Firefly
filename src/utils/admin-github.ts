@@ -174,3 +174,134 @@ export async function commitRepoFile(
 		return { ok: false, message: `网络请求失败：${String(error)}` };
 	}
 }
+
+/** 仓库目录条目 */
+export interface RepoDirEntry {
+	name: string;
+	path: string;
+	sha: string;
+	size: number;
+	type: string;
+	downloadUrl: string;
+}
+
+/** 列出仓库中某个目录的内容 */
+export async function listRepoDir(
+	target: GitHubTarget,
+	path: string,
+): Promise<GitHubResult<RepoDirEntry[]>> {
+	if (!isGitHubReady(target)) {
+		return { ok: false, message: "仓库信息或 Token 不完整" };
+	}
+	try {
+		const response = await fetch(
+			`${apiUrl(target.owner, target.repo, path)}?ref=${encodeURIComponent(target.branch || "main")}`,
+			{ headers: buildHeaders(target.token) },
+		);
+		if (!response.ok) {
+			return { ok: false, message: await readError(response) };
+		}
+		const data = (await response.json()) as Array<{
+			name: string;
+			path: string;
+			sha: string;
+			size: number;
+			type: string;
+			download_url?: string;
+		}>;
+		if (!Array.isArray(data)) {
+			return { ok: false, message: "目标不是目录，请检查相册 id 是否正确" };
+		}
+		return {
+			ok: true,
+			message: "读取成功",
+			data: data.map((item) => ({
+				name: item.name,
+				path: item.path,
+				sha: item.sha,
+				size: item.size ?? 0,
+				type: item.type ?? "file",
+				downloadUrl: item.download_url ?? "",
+			})),
+		};
+	} catch (error) {
+		return { ok: false, message: `网络请求失败：${String(error)}` };
+	}
+}
+
+/** 二进制转 base64（分块避免栈溢出） */
+function bytesToBase64(bytes: Uint8Array): string {
+	let binary = "";
+	const chunkSize = 0x8000;
+	for (let i = 0; i < bytes.length; i += chunkSize) {
+		binary += String.fromCharCode(...bytes.subarray(i, i + chunkSize));
+	}
+	return btoa(binary);
+}
+
+/** 上传二进制文件（图片等），sha 存在时为更新 */
+export async function commitRepoBinaryFile(
+	target: GitHubTarget,
+	path: string,
+	bytes: Uint8Array,
+	message: string,
+	sha?: string,
+): Promise<GitHubResult<{ htmlUrl: string }>> {
+	if (!isGitHubReady(target)) {
+		return { ok: false, message: "仓库信息或 Token 不完整" };
+	}
+	try {
+		const response = await fetch(apiUrl(target.owner, target.repo, path), {
+			method: "PUT",
+			headers: buildHeaders(target.token),
+			body: JSON.stringify({
+				message,
+				content: bytesToBase64(bytes),
+				branch: target.branch || "main",
+				...(sha ? { sha } : {}),
+			}),
+		});
+		if (!response.ok) {
+			return { ok: false, message: await readError(response) };
+		}
+		const data = (await response.json()) as {
+			content?: { html_url?: string };
+		};
+		return {
+			ok: true,
+			message: "上传成功",
+			data: { htmlUrl: data.content?.html_url ?? "" },
+		};
+	} catch (error) {
+		return { ok: false, message: `网络请求失败：${String(error)}` };
+	}
+}
+
+/** 删除仓库中的文件（需要提供 sha） */
+export async function deleteRepoFile(
+	target: GitHubTarget,
+	path: string,
+	sha: string,
+	message: string,
+): Promise<GitHubResult> {
+	if (!isGitHubReady(target)) {
+		return { ok: false, message: "仓库信息或 Token 不完整" };
+	}
+	try {
+		const response = await fetch(apiUrl(target.owner, target.repo, path), {
+			method: "DELETE",
+			headers: buildHeaders(target.token),
+			body: JSON.stringify({
+				message,
+				sha,
+				branch: target.branch || "main",
+			}),
+		});
+		if (!response.ok) {
+			return { ok: false, message: await readError(response) };
+		}
+		return { ok: true, message: "已删除" };
+	} catch (error) {
+		return { ok: false, message: `网络请求失败：${String(error)}` };
+	}
+}
