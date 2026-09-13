@@ -276,12 +276,13 @@ export const SETTINGS_UNITS: SettingsUnitMeta[] = [
 	{
 		id: "gallery",
 		label: "相册",
-		description: "相册页面的分组与图片",
+		description: "相册元信息，以及图片的上传、删除与预览",
 		icon: "image",
 		group: "feature",
 		file: CONFIG_FILE_OF.galleryConfig,
 		varName: "galleryConfig",
 		kind: "form",
+		editor: "gallery",
 	},
 	{
 		id: "booknav",
