@@ -664,6 +664,55 @@ button.admin-switch {
 	transform: translateX(1.125rem);
 }
 
+/* 相册图片网格 */
+.admin-gallery-grid {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(8.5rem, 1fr));
+	gap: 0.75rem;
+}
+.admin-gallery-item {
+	display: flex;
+	flex-direction: column;
+	gap: 0.375rem;
+	margin: 0;
+	padding: 0.5rem;
+	border: 1px solid var(--line-divider);
+	border-radius: 0.625rem;
+	background: var(--page-bg, var(--card-bg));
+}
+.admin-gallery-item__img {
+	width: 100%;
+	aspect-ratio: 4 / 3;
+	object-fit: cover;
+	border-radius: 0.5rem;
+	background: var(--btn-regular-bg);
+}
+.admin-gallery-item__img--empty {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	color: var(--btn-content);
+	opacity: 0.4;
+}
+.admin-gallery-item__meta {
+	display: flex;
+	flex-direction: column;
+	gap: 0.25rem;
+	margin: 0;
+}
+.admin-gallery-item__name {
+	font-size: 0.75rem;
+	color: var(--btn-content);
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+.admin-gallery-item__size {
+	font-size: 0.6875rem;
+	color: var(--btn-content);
+	opacity: 0.6;
+}
+
 /* 布局 */
 .admin-stack {
 	display: flex;
