@@ -21,8 +21,8 @@ export const adminConfig: AdminConfig = {
 	auth: {
 		// 默认密码是 firefly，请第一时间用 `pnpm admin:passwd 新密码` 修改！
 		passwordHash:
-			"0a878e54b56af1a4af24a3d2fcadf0a172d493881874560af6877c1dbc86e67d",
-		salt: "firefly-admin-2026",
+			"9fa29249217fb34574fe00c8f2cf4053f67040b384ed1f1e0440d4acf0464777",
+		salt: "firefly-2d3f7bff3f7a",
 		// 登录状态保持 12 小时，设为 0 表示关闭标签页即需重新登录
 		sessionHours: 12,
 		// 连续输错 5 次后锁定 10 分钟
